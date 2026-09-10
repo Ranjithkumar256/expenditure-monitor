@@ -1,0 +1,16 @@
+{
+  "appId": "com.paisatrack.expenditure",
+  "appName": "PaisaTrack",
+  "webDir": "static",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#090d16"
+    }
+  }
+}

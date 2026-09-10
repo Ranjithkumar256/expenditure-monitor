@@ -1,0 +1,18 @@
+{
+  "name": "PaisaTrack - Personal Finance & Expenditure Monitor",
+  "short_name": "PaisaTrack",
+  "description": "Comprehensive Personal Finance, Expenditure, Banks, Loans, and Debts Monitor for Web & Android",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070a13",
+  "theme_color": "#070a13",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

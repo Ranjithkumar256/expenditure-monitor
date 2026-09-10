@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070a13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="PaisaTrack - Comprehensive Expenditure & Personal Finance Monitor for Web and Android">
+  <title>PaisaTrack - Expenditure & Personal Finance Monitor</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+  <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- DESKTOP / TABLET SIDEBAR -->
+    <aside class="desktop-sidebar" id="desktopSidebar">
+      <div class="sidebar-header">
+        <div class="logo-box">
+          <div class="logo-icon">₹</div>
+          <div class="logo-text">
+            <h2>PaisaTrack</h2>
+            <span>Finance Monitor</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Profile Indicator in Sidebar -->
+      <div class="sidebar-profile-card" id="sidebarProfileCard">
+        <div class="sidebar-profile-avatar" id="sidebarProfileAvatar" style="background-color: #4f46e5;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+        <div class="sidebar-profile-details">
+          <div class="sidebar-profile-title" id="sidebarProfileName">Personal Finances</div>
+          <span class="sidebar-profile-status">Active Profile</span>
+        </div>
+        <button class="btn-profile-quick-switch" id="sidebarSwitchProfileBtn" title="Switch or Manage Profiles">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-link active" data-tab="dashboard">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-link" data-tab="transactions">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          <span>Transactions</span>
+        </button>
+        <button class="nav-link" data-tab="accounts">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+          <span>Banks & Cards</span>
+        </button>
+        <button class="nav-link" data-tab="debts">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Loans & Debts</span>
+        </button>
+        <button class="nav-link" data-tab="carryover">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+          <span>Carry Forward</span>
+        </button>
+        <button class="nav-link" data-tab="reports">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          <span>Reports & Charts</span>
+        </button>
+        <button class="nav-link" data-tab="settings">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="carryover-mini-card" id="sidebarCarryoverBox">
+          <div class="carryover-label">Month-end Rollover</div>
+          <div class="carryover-amount" id="sidebarCarryoverAmount">₹0.00</div>
+          <div class="carryover-status-pill" id="sidebarCarryoverStatus">Active Month</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MOBILE SLIDE-OUT DRAWER OVERLAY -->
+    <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop">
+      <div class="mobile-drawer" id="mobileDrawer">
+        <div class="mobile-drawer-header">
+          <div class="logo-box">
+            <div class="logo-icon">₹</div>
+            <div class="logo-text">
+              <h2>PaisaTrack</h2>
+              <span>Android & Web</span>
+            </div>
+          </div>
+          <button class="modal-close-btn" id="closeDrawerBtn">&times;</button>
+        </div>
+
+        <!-- Active Profile Card in Mobile Drawer -->
+        <div class="sidebar-profile-card mobile-drawer-profile" id="drawerProfileCard">
+          <div class="sidebar-profile-avatar" id="drawerProfileAvatar" style="background-color: #4f46e5;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          <div class="sidebar-profile-details">
+            <div class="sidebar-profile-title" id="drawerProfileName">Personal Finances</div>
+            <span class="sidebar-profile-status">Active Profile</span>
+          </div>
+          <button class="btn-profile-quick-switch" id="drawerSwitchProfileBtn" title="Switch or Manage Profiles">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+          </button>
+        </div>
+
+        <nav class="mobile-drawer-nav">
+          <button class="nav-link active" data-tab="dashboard">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-link" data-tab="transactions">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span>Transactions Ledger</span>
+          </button>
+          <button class="nav-link" data-tab="accounts">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            <span>Banks & Credit Cards</span>
+          </button>
+          <button class="nav-link" data-tab="debts">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Loans & Relatives Debts</span>
+          </button>
+          <button class="nav-link" data-tab="carryover">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+            <span>Month-End Rollover</span>
+          </button>
+          <button class="nav-link" data-tab="reports">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            <span>Reports & Analytics</span>
+          </button>
+          <button class="nav-link" data-tab="settings">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Settings & Currency</span>
+          </button>
+          <div style="padding: 10px 14px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <!-- Mobile User Profile & Logout -->
+            <div class="mobile-drawer-user-section" id="drawerUserSection">
+              <div class="user-avatar-circle" id="drawerUserAvatar">DU</div>
+              <div class="drawer-user-info">
+                <div class="drawer-user-name" id="drawerUserName">Demo User</div>
+                <div class="drawer-user-email" id="drawerUserEmail">demo@paisatrack.com</div>
+              </div>
+              <button class="btn-drawer-logout" id="mobileLogoutBtn" title="Sign Out">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              </button>
+            </div>
+
+            <button class="btn btn-sm btn-secondary w-100" id="drawerToggleDemoBtn" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border-radius: 8px; padding: 8px 12px; margin-top: 10px;">
+              <span id="drawerDemoIcon">🗑️</span>
+              <span id="drawerDemoText" style="font-weight: 600;">Remove Dummy Data</span>
+            </button>
+          </div>
+        </nav>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT VIEW AREA -->
+    <main class="main-content">
+      <!-- TOP HEADER -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <div class="page-title-box">
+            <h1 id="pageTitle">Dashboard</h1>
+            <span class="active-period-badge" id="currentPeriodBadge">September 2026</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Profile Switcher Dropdown -->
+          <div class="profile-switcher-dropdown-wrap" id="profileSwitcherWrap">
+            <button class="profile-pill-btn" id="activeProfileBtn" aria-expanded="false" title="Switch or Manage Profiles">
+              <span class="profile-avatar-mini" id="headerProfileAvatar" style="background-color: #4f46e5;">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </span>
+              <span class="profile-name-text" id="headerProfileName">Personal Finances</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+
+            <!-- Profile Dropdown Menu -->
+            <div class="profile-dropdown-menu" id="profileDropdownMenu">
+              <div class="profile-menu-header">
+                <span class="menu-label">Active Profiles</span>
+                <button class="btn-text-link" id="menuManageProfilesBtn">Manage All</button>
+              </div>
+              <div class="profile-list-quick" id="profileListQuick">
+                <!-- Dynamically populated -->
+              </div>
+              <div class="profile-menu-footer">
+                <button class="btn-menu-action" id="menuAddProfileBtn">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>+ Create New Profile</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Currency Selector -->
+          <div class="currency-selector-box">
+            <label for="currencySelect" class="sr-only">Currency</label>
+            <select id="currencySelect" class="currency-dropdown" aria-label="Select Currency">
+              <option value="INR" selected>🇮🇳 INR (₹)</option>
+              <option value="USD">🇺🇸 USD ($)</option>
+              <option value="EUR">🇪🇺 EUR (€)</option>
+              <option value="GBP">🇬🇧 GBP (£)</option>
+              <option value="AED">🇦🇪 AED (د.إ)</option>
+              <option value="SGD">🇸🇬 SGD (S$)</option>
+              <option value="CAD">🇨🇦 CAD (C$)</option>
+              <option value="AUD">🇦🇺 AUD (A$)</option>
+            </select>
+          </div>
+
+          <!-- Quick Action Demo Data Button -->
+          <button class="btn btn-sm btn-secondary header-action-btn" id="quickToggleDemoBtn" title="Toggle Demo / Dummy Data" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: 1px solid rgba(255,255,255,0.18);">
+            <span id="quickDemoIcon">🗑️</span>
+            <span id="quickDemoText" class="d-none d-md-inline">Remove Dummy Data</span>
+          </button>
+
+          <!-- Quick Action Add Button -->
+          <button class="btn btn-primary btn-sm header-action-btn" id="headerAddBtn">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span class="btn-text">Add Record</span>
+          </button>
+
+          <!-- User Account Badge & Logout -->
+          <div class="user-profile-badge" id="userHeaderBadge" title="User Account">
+            <div class="user-avatar-circle" id="userAvatarInitials">DU</div>
+            <div class="user-info-text d-none d-lg-flex">
+              <span class="user-display-name" id="userDisplayName">Demo User</span>
+              <span class="user-role-tag" id="userRoleTag">Online</span>
+            </div>
+            <button class="btn-logout-icon" id="logoutBtn" title="Sign Out">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- SCROLLABLE PAGE VIEWS -->
+      <div class="content-body">
+
+        <!-- ============================================== -->
+        <!-- 1. DASHBOARD VIEW                              -->
+        <!-- ============================================== -->
+        <section class="tab-view active" id="viewDashboard">
+          <!-- Hero KPI Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card card-networth">
+              <div class="kpi-header">
+                <span class="kpi-title">Total Net Worth</span>
+                <span class="kpi-icon-badge networth">🏦</span>
+              </div>
+              <div class="kpi-value" id="kpiNetworth">₹0.00</div>
+              <div class="kpi-subtext">Across All Bank Accounts & Cash</div>
+            </div>
+
+            <div class="kpi-card card-income">
+              <div class="kpi-header">
+                <span class="kpi-title">Monthly Income</span>
+                <span class="kpi-icon-badge income">↓</span>
+              </div>
+              <div class="kpi-value text-emerald" id="kpiIncome">₹0.00</div>
+              <div class="kpi-subtext" id="kpiIncomeSub">Salary, Freelance, Dividends</div>
+            </div>
+
+            <div class="kpi-card card-expense">
+              <div class="kpi-header">
+                <span class="kpi-title">Monthly Expenses</span>
+                <span class="kpi-icon-badge expense">↑</span>
+              </div>
+              <div class="kpi-value text-rose" id="kpiExpense">₹0.00</div>
+              <div class="kpi-subtext" id="kpiExpenseSub">Food, Fuel, Bills, EMIs</div>
+            </div>
+
+            <div class="kpi-card card-savings">
+              <div class="kpi-header">
+                <span class="kpi-title">Net Month Savings</span>
+                <span class="kpi-icon-badge savings">⚡</span>
+              </div>
+              <div class="kpi-value text-cyan" id="kpiSavings">₹0.00</div>
+              <div class="kpi-subtext" id="kpiSavingsRate">Savings Rate: 0%</div>
+            </div>
+          </div>
+
+          <!-- Carryover Callout Banner -->
+          <div class="carryover-banner">
+            <div class="banner-content">
+              <div class="banner-tag">MONTH-END CARRY FORWARD ENGINE</div>
+              <h3 id="carryoverBannerTitle">Current Month Net Balance Rollover</h3>
+              <p id="carryoverBannerDesc">Opening Balance (₹0.00) + Incomes (₹0.00) - Expenses (₹0.00) = Closing Net Balance</p>
+            </div>
+            <div class="banner-actions">
+              <div class="carryover-highlight-num" id="carryoverClosingNumber">₹0.00</div>
+              <button class="btn btn-indigo" id="openCarryoverWizardBtn">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                Carry Forward to Next Month
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons Row -->
+          <div class="quick-actions-bar">
+            <button class="quick-action-pill add-expense" id="quickAddExpenseBtn">
+              <span class="pill-icon">💸</span>
+              <span>Add Expense</span>
+            </button>
+            <button class="quick-action-pill add-income" id="quickAddIncomeBtn">
+              <span class="pill-icon">💰</span>
+              <span>Add Income</span>
+            </button>
+            <button class="quick-action-pill add-transfer" id="quickAddTransferBtn">
+              <span class="pill-icon">⇄</span>
+              <span>Transfer</span>
+            </button>
+            <button class="quick-action-pill add-borrow" id="quickAddBorrowBtn">
+              <span class="pill-icon">🤝</span>
+              <span>Borrow / Lent</span>
+            </button>
+            <button class="quick-action-pill pay-emi" id="quickPayEmiBtn">
+              <span class="pill-icon">🏛️</span>
+              <span>Pay Loan EMI</span>
+            </button>
+          </div>
+
+          <!-- Mobile Dashboard Segment Switcher (Mobile only <= 768px) -->
+          <div class="mobile-dashboard-segmented-nav" id="mobileDashSegmentNav">
+            <button class="mobile-segment-tab active" data-dash-segment="overview">
+              <span class="seg-icon">⚡</span>
+              <span>Overview</span>
+            </button>
+            <button class="mobile-segment-tab" data-dash-segment="analytics">
+              <span class="seg-icon">📊</span>
+              <span>Charts</span>
+            </button>
+            <button class="mobile-segment-tab" data-dash-segment="accounts">
+              <span class="seg-icon">🏦</span>
+              <span>Banks & Debts</span>
+            </button>
+          </div>
+
+          <!-- Analytics Charts Split -->
+          <div class="dashboard-charts-grid dash-segment-analytics">
+            <!-- Expense Category Breakdown Donut -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <h3>Expenses by Category</h3>
+                  <span class="chart-sub">This Month's Spending Distribution</span>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="categoryDonutChart"></canvas>
+              </div>
+              <div class="category-legend-list" id="categoryDonutLegend"></div>
+            </div>
+
+            <!-- Month vs Month Trend Bar -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <h3>Income vs Expense Trend</h3>
+                  <span class="chart-sub">Last 6 Months Cash Flow</span>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="trendBarChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Snapshot Section: Accounts & Debts -->
+          <div class="dashboard-split-grid dash-segment-accounts">
+            <!-- Bank Accounts Preview -->
+            <div class="content-card">
+              <div class="card-header-flex">
+                <h3>Bank Accounts & Wallets</h3>
+                <button class="btn-link" data-tab="accounts">View All →</button>
+              </div>
+              <div class="accounts-summary-list" id="dashboardAccountsList"></div>
+            </div>
+
+            <!-- Friends & Relatives Debts Preview -->
+            <div class="content-card">
+              <div class="card-header-flex">
+                <h3>Friends & Relatives Borrows</h3>
+                <button class="btn-link" data-tab="debts">Manage Debts →</button>
+              </div>
+              <div class="debt-summary-counters">
+                <div class="debt-counter-badge payable">
+                  <span>You Owe (Payable)</span>
+                  <strong id="dashTotalPayable">₹0.00</strong>
+                </div>
+                <div class="debt-counter-badge receivable">
+                  <span>They Owe You (Receivable)</span>
+                  <strong id="dashTotalReceivable">₹0.00</strong>
+                </div>
+              </div>
+              <div class="debts-summary-list" id="dashboardDebtsList"></div>
+            </div>
+          </div>
+
+          <!-- Recent Transactions -->
+          <div class="content-card mt-4 dash-segment-overview">
+            <div class="card-header-flex">
+              <div>
+                <h3>Recent Transactions</h3>
+                <span class="card-sub">Latest expenses, incomes and transfers</span>
+              </div>
+              <button class="btn-link" data-tab="transactions">Full History →</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="dashboardRecentTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Account / Mode</th>
+                    <th class="text-right">Amount</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardRecentTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- 2. TRANSACTIONS VIEW                           -->
+        <!-- ============================================== -->
+        <section class="tab-view" id="viewTransactions">
+          <div class="view-header-bar">
+            <div class="filters-wrap">
+              <div class="search-input-box">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="transSearchInput" placeholder="Search transactions, tags, notes...">
+              </div>
+
+              <select id="transTypeFilter" class="filter-select">
+                <option value="">All Types</option>
+                <option value="expense">Expenses Only</option>
+                <option value="income">Incomes Only</option>
+                <option value="transfer">Transfers Only</option>
+              </select>
+
+              <select id="transCategoryFilter" class="filter-select">
+                <option value="">All Categories</option>
+              </select>
+
+              <select id="transAccountFilter" class="filter-select">
+                <option value="">All Accounts</option>
+              </select>
+
+              <input type="month" id="transMonthFilter" class="filter-date">
+            </div>
+
+            <div class="view-actions">
+              <button class="btn btn-primary" id="openAddTransactionBtn">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                New Transaction
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Summary Pill -->
+          <div class="trans-summary-pill-bar">
+            <div class="stat-badge">Showing: <strong id="transFilterCount">0</strong> records</div>
+            <div class="stat-badge text-emerald">Total Inflow: <strong id="transFilterIncome">₹0.00</strong></div>
+            <div class="stat-badge text-rose">Total Outflow: <strong id="transFilterExpense">₹0.00</strong></div>
+            <div class="stat-badge text-cyan">Net: <strong id="transFilterNet">₹0.00</strong></div>
+          </div>
+
+          <div class="content-card">
+            <div class="table-responsive">
+              <table class="data-table" id="transactionsTable">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Type</th>
+                    <th>Description & Tags</th>
+                    <th>Category</th>
+                    <th>Account / Card</th>
+                    <th>Payment Mode</th>
+                    <th class="text-right">Amount</th>
+                    <th class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionsTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- 3. ACCOUNTS & CARDS VIEW                       -->
+        <!-- ============================================== -->
+        <section class="tab-view" id="viewAccounts">
+          <!-- Bank Accounts Section -->
+          <div class="section-title-bar">
+            <div>
+              <h2>Bank Accounts & Wallets</h2>
+              <span class="subtext">Savings, Checking, Fixed Deposits, and Cash Wallets</span>
+            </div>
+            <div class="section-btns">
+              <button class="btn btn-secondary btn-sm" id="openTransferModalBtn">⇄ Inter-Account Transfer</button>
+              <button class="btn btn-primary btn-sm" id="openAddAccountBtn">+ Add Bank Account</button>
+            </div>
+          </div>
+
+          <div class="accounts-grid" id="accountsGrid"></div>
+
+          <!-- Cards Section -->
+          <div class="section-title-bar mt-5">
+            <div>
+              <h2>Credit & Debit Cards</h2>
+              <span class="subtext">Credit limits, Available balances, Billing cycles, and Due dates</span>
+            </div>
+            <div class="section-btns">
+              <button class="btn btn-primary btn-sm" id="openAddCardBtn">+ Add Card</button>
+            </div>
+          </div>
+
+          <div class="cards-grid" id="cardsGrid"></div>
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- 4. LOANS & DEBTS VIEW                          -->
+        <!-- ============================================== -->
+        <section class="tab-view" id="viewDebts">
+          <!-- Active Loans Section -->
+          <div class="section-title-bar">
+            <div>
+              <h2>Active Loans & EMIs</h2>
+              <span class="subtext">Home loans, Car loans, Personal loans with monthly EMI tracking</span>
+            </div>
+            <div class="section-btns">
+              <button class="btn btn-primary btn-sm" id="openAddLoanBtn">+ Add Loan</button>
+            </div>
+          </div>
+
+          <div class="loans-grid" id="loansGrid"></div>
+
+          <!-- Friends & Relatives Borrows / Lent -->
+          <div class="section-title-bar mt-5">
+            <div>
+              <h2>Friends & Relatives Borrows & Lent</h2>
+              <span class="subtext">Track money borrowed from relatives or lent to friends with full settlement</span>
+            </div>
+            <div class="section-btns">
+              <button class="btn btn-primary btn-sm" id="openAddBorrowBtn">+ Record Borrow / Lent</button>
+            </div>
+          </div>
+
+          <!-- Borrows vs Lent Split Tabs -->
+          <div class="debt-tabs-nav">
+            <button class="debt-tab active" id="debtTabBorrowed" data-dir="borrowed">
+              Borrowed from (You Owe)
+              <span class="badge badge-rose" id="badgeTotalBorrowed">₹0.00</span>
+            </button>
+            <button class="debt-tab" id="debtTabLent" data-dir="lent">
+              Lent to (They Owe You)
+              <span class="badge badge-emerald" id="badgeTotalLent">₹0.00</span>
+            </button>
+          </div>
+
+          <div class="content-card mt-3">
+            <div class="table-responsive">
+              <table class="data-table" id="debtsTable">
+                <thead>
+                  <tr>
+                    <th>Person Name</th>
+                    <th>Relationship</th>
+                    <th>Bank Account / Mode</th>
+                    <th>Date Taken</th>
+                    <th>Due Date</th>
+                    <th>Principal</th>
+                    <th>Remaining Balance</th>
+                    <th>Status</th>
+                    <th class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="debtsTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- 5. MONTH-END CARRY FORWARD VIEW                -->
+        <!-- ============================================== -->
+        <section class="tab-view" id="viewCarryover">
+          <div class="carryover-hero-card">
+            <div class="hero-left">
+              <div class="badge badge-indigo mb-2">FINANCIAL ROLLOVER ENGINE</div>
+              <h2>Month-End Carry Forward Center</h2>
+              <p>
+                Automatically computes your net savings and carries forward positive or remaining funds into the next month's opening balance, maintaining continuous financial continuity.
+              </p>
+              <div class="period-picker-bar mt-3">
+                <label for="carryoverMonthPicker">Select Month to Carry Forward:</label>
+                <input type="month" id="carryoverMonthPicker" class="filter-date">
+                <button class="btn btn-secondary btn-sm" id="recalcCarryoverBtn">Recalculate</button>
+              </div>
+            </div>
+            <div class="hero-right">
+              <div class="carryover-metric-display">
+                <span class="metric-label">Closing Net Balance</span>
+                <span class="metric-val" id="carryoverHeroClosingVal">₹0.00</span>
+                <span class="metric-sub" id="carryoverHeroStatusBadge">Status: Open</span>
+                <button class="btn btn-emerald btn-block mt-3" id="executeCarryoverActionBtn">
+                  ✓ Finalize & Carry Forward
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formula Breakdown Cards -->
+          <div class="formula-breakdown-grid mt-4">
+            <div class="formula-card">
+              <div class="step-num">Step 1</div>
+              <h4>Opening Balance</h4>
+              <div class="amount-val text-blue" id="stepOpeningBal">₹0.00</div>
+              <p>Carried forward from previous month's closing or initial account balance</p>
+            </div>
+
+            <div class="formula-math-sign">+</div>
+
+            <div class="formula-card">
+              <div class="step-num">Step 2</div>
+              <h4>Total Income</h4>
+              <div class="amount-val text-emerald" id="stepIncomeBal">₹0.00</div>
+              <p>Salary, consulting, returns, and friend debt repayments collected</p>
+            </div>
+
+            <div class="formula-math-sign">-</div>
+
+            <div class="formula-card">
+              <div class="step-num">Step 3</div>
+              <h4>Total Expenses & EMIs</h4>
+              <div class="amount-val text-rose" id="stepExpenseBal">₹0.00</div>
+              <p>Monthly spending, groceries, utilities, loan EMIs, and debt payments</p>
+            </div>
+
+            <div class="formula-math-sign">=</div>
+
+            <div class="formula-card highlight">
+              <div class="step-num">Rollover</div>
+              <h4>Next Month Starting</h4>
+              <div class="amount-val text-cyan" id="stepNetRollover">₹0.00</div>
+              <p>Carried forward into next month's starting ledger</p>
+            </div>
+          </div>
+
+          <!-- Historical Carryover Table -->
+          <div class="content-card mt-5">
+            <div class="card-header-flex">
+              <div>
+                <h3>Carry Forward Historical Ledger</h3>
+                <span class="card-sub">Past monthly closures and rolled-over balances</span>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="carryoverHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Month & Year</th>
+                    <th>Opening Balance</th>
+                    <th>Total Incomes</th>
+                    <th>Total Expenses</th>
+                    <th>Loan EMIs</th>
+                    <th>Debts Repaid</th>
+                    <th>Closing Balance</th>
+                    <th>Carried Forward</th>
+                    <th>Status</th>
+                    <th>Closed On</th>
+                  </tr>
+                </thead>
+                <tbody id="carryoverHistoryTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- 6. REPORTS & CHARTS VIEW (Month-wise & Day-wise)-->
+        <!-- ============================================== -->
+        <section class="tab-view" id="viewReports">
+          <div class="view-header-bar">
+            <div>
+              <h2>Financial Reports & Analytics</h2>
+              <span class="subtext">Comprehensive month-wise comparisons and day-by-day expenditure tracking</span>
+            </div>
+            <div class="period-filter-wrap">
+              <input type="month" id="reportMonthPicker" class="filter-date">
+              <button class="btn btn-secondary btn-sm" id="exportReportCsvBtn">Export CSV</button>
+              <button class="btn btn-secondary btn-sm" id="exportReportJsonBtn">Export JSON</button>
+            </div>
+          </div>
+
+          <!-- Report Sub-tabs: Month-wise vs Day-wise -->
+          <div class="sub-nav-tabs">
+            <button class="sub-tab active" id="subTabMonthWise" data-sub="month">
+              📅 Month-wise Report & Breakdown
+            </button>
+            <button class="sub-tab" id="subTabDayWise" data-sub="day">
+              📆 Day-wise Expenditure Timeline
+            </button>
+          </div>
+
+          <!-- MONTH-WISE CONTENT -->
+          <div class="sub-view active" id="subViewMonthWise">
+            <!-- Monthly Summary Cards -->
+            <div class="kpi-grid mt-3">
+              <div class="kpi-card">
+                <div class="kpi-title">Selected Month Inflow</div>
+                <div class="kpi-value text-emerald" id="reportMonthIncome">₹0.00</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Selected Month Outflow</div>
+                <div class="kpi-value text-rose" id="reportMonthExpense">₹0.00</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Net Month Savings</div>
+                <div class="kpi-value text-cyan" id="reportMonthNet">₹0.00</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Monthly Savings Rate</div>
+                <div class="kpi-value text-indigo" id="reportMonthSavingsRate">0%</div>
+              </div>
+            </div>
+
+            <!-- Month Charts -->
+            <div class="dashboard-charts-grid mt-4">
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <div>
+                    <h3>Category Spending Distribution</h3>
+                    <span class="chart-sub">Category-wise % and budget usage</span>
+                  </div>
+                </div>
+                <div class="chart-container">
+                  <canvas id="reportCategoryChart"></canvas>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <div>
+                    <h3>6-Month Comparison Trends</h3>
+                    <span class="chart-sub">Income, Expense, and Net Savings</span>
+                  </div>
+                </div>
+                <div class="chart-container">
+                  <canvas id="reportTrendChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category Detail Table -->
+            <div class="content-card mt-4">
+              <div class="card-header-flex">
+                <h3>Category-wise Expenditure Table</h3>
+              </div>
+              <div class="table-responsive">
+                <table class="data-table" id="reportCategoryTable">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Total Spent</th>
+                      <th>% of Total</th>
+                      <th>Transactions</th>
+                      <th>Monthly Budget</th>
+                      <th>Budget Utilization</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reportCategoryTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- DAY-WISE CONTENT -->
+          <div class="sub-view" id="subViewDayWise">
+            <!-- Day-wise KPI Summary -->
+            <div class="kpi-grid mt-3">
+              <div class="kpi-card">
+                <div class="kpi-title">Average Daily Spend</div>
+                <div class="kpi-value text-rose" id="reportDailyAvg">₹0.00</div>
+                <div class="kpi-subtext">Across 30 days in month</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Peak Spending Day</div>
+                <div class="kpi-value text-amber" id="reportPeakDayDate">-</div>
+                <div class="kpi-subtext" id="reportPeakDayAmount">Peak Spent: ₹0.00</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Active Spending Days</div>
+                <div class="kpi-value text-cyan" id="reportActiveDays">0 Days</div>
+                <div class="kpi-subtext">Days with logged expenses</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Total Monthly Outflow</div>
+                <div class="kpi-value text-rose" id="reportDayTotalExpense">₹0.00</div>
+                <div class="kpi-subtext">Day-by-day sum</div>
+              </div>
+            </div>
+
+            <!-- Day-wise Bar / Timeline Chart -->
+            <div class="chart-card mt-4">
+              <div class="chart-card-header">
+                <div>
+                  <h3>Day-by-Day Expenditure Chart</h3>
+                  <span class="chart-sub">Daily spending fluctuation across the entire month</span>
+                </div>
+              </div>
+              <div class="chart-container" style="min-height: 250px;">
+                <canvas id="reportDailyChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Day-wise Table -->
+            <div class="content-card mt-4">
+              <div class="card-header-flex">
+                <h3>Day-by-Day Breakdown Ledger</h3>
+              </div>
+              <div class="table-responsive">
+                <table class="data-table" id="reportDailyTable">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Day of Week</th>
+                      <th>Daily Expense</th>
+                      <th>Daily Income</th>
+                      <th>Net Cashflow</th>
+                      <th>Transaction Count</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reportDailyTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- 7. SETTINGS VIEW                               -->
+        <!-- ============================================== -->
+        <!-- 7. SETTINGS VIEW                               -->
+        <!-- ============================================== -->
+        <section class="tab-view" id="viewSettings" data-active-segment="all">
+          <!-- Mobile Settings Segmented Switcher (Visible on mobile, sticky) -->
+          <div class="mobile-settings-segmented-nav" id="mobileSettingsSegmentNav">
+            <button class="mobile-segment-tab active" data-settings-segment="all">
+              <span class="seg-icon">📋</span><span>All</span>
+            </button>
+            <button class="mobile-segment-tab" data-settings-segment="profiles">
+              <span class="seg-icon">👤</span><span>Profiles</span>
+            </button>
+            <button class="mobile-segment-tab" data-settings-segment="currency">
+              <span class="seg-icon">🌐</span><span>Currency</span>
+            </button>
+            <button class="mobile-segment-tab" data-settings-segment="categories">
+              <span class="seg-icon">🏷️</span><span>Categories</span>
+            </button>
+            <button class="mobile-segment-tab" data-settings-segment="data">
+              <span class="seg-icon">⚡</span><span>App Data</span>
+            </button>
+          </div>
+
+          <div class="settings-grid">
+            <!-- 1. Multi-Profile Management -->
+            <div class="content-card settings-card settings-segment-profiles">
+              <div class="card-header-flex settings-header-flex">
+                <div class="settings-header-title">
+                  <h3>Multiple Profiles & Workspaces</h3>
+                  <span class="card-sub">Switch, create, edit, or delete isolated financial profiles</span>
+                </div>
+                <button class="btn btn-primary btn-sm btn-nowrap" id="settingsAddProfileBtn">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>Add Profile</span>
+                </button>
+              </div>
+              <div class="profiles-settings-list mt-3" id="profilesSettingsList"></div>
+            </div>
+
+            <!-- 2. Currency Settings -->
+            <div class="content-card settings-card settings-segment-currency">
+              <div class="settings-header-title mb-2">
+                <h3>Currency & Region Settings</h3>
+                <p class="card-sub">Main currency is Indian Rupee (₹ INR) with Lakhs/Crores notation. Switch to any optional world currency anytime.</p>
+              </div>
+
+              <div class="form-group mt-3">
+                <label for="settingsCurrencySelect">Active Display Currency</label>
+                <select id="settingsCurrencySelect" class="form-control">
+                  <option value="INR">🇮🇳 Indian Rupee (₹ INR) - Default</option>
+                  <option value="USD">🇺🇸 US Dollar ($ USD)</option>
+                  <option value="EUR">🇪🇺 Euro (€ EUR)</option>
+                  <option value="GBP">🇬🇧 British Pound (£ GBP)</option>
+                  <option value="AED">🇦🇪 UAE Dirham (AED)</option>
+                  <option value="SGD">🇸🇬 Singapore Dollar (S$ SGD)</option>
+                  <option value="CAD">🇨🇦 Canadian Dollar (C$ CAD)</option>
+                  <option value="AUD">🇦🇺 Australian Dollar (A$ AUD)</option>
+                </select>
+              </div>
+
+              <div class="currency-info-box mt-3" id="currencyInfoBox">
+                <div class="info-row">
+                  <span class="info-label">Base Currency:</span>
+                  <strong class="info-val">Indian Rupee (INR - ₹)</strong>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Numbering Format:</span>
+                  <strong class="info-val">Indian (Lakhs & Crores ₹ 1,50,000.00)</strong>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Multi-Currency:</span>
+                  <strong class="info-val">Live conversion supported on all views</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Categories Management -->
+            <div class="content-card settings-card settings-segment-categories">
+              <div class="card-header-flex settings-header-flex">
+                <div class="settings-header-title">
+                  <h3>Manage Categories</h3>
+                  <span class="card-sub">Add custom expense or income categories</span>
+                </div>
+                <button class="btn btn-primary btn-sm btn-nowrap" id="openAddCategoryBtn">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>Add Category</span>
+                </button>
+              </div>
+
+              <div class="categories-tag-list mt-3" id="categoriesSettingsList"></div>
+            </div>
+
+            <!-- 4. Android App & PWA Status -->
+            <div class="content-card settings-card settings-segment-data">
+              <div class="card-header-flex settings-header-flex mb-2">
+                <div class="settings-header-title">
+                  <h3>Android Mobile & Web Compatibility</h3>
+                  <span class="card-sub">Optimized for Android mobiles (320px - 412px+), foldables & tablets</span>
+                </div>
+                <span class="badge badge-emerald" style="font-size: 11px; padding: 4px 8px; flex-shrink: 0;">PWA Ready</span>
+              </div>
+              <div class="pwa-guide-box mt-2">
+                <div class="guide-item">
+                  <span class="guide-icon">📱</span>
+                  <div class="guide-content">
+                    <strong>Install on Android Mobile:</strong>
+                    <p>Open this URL in Chrome on any Android phone and tap <em>"Add to Home Screen"</em> or <em>"Install App"</em> for full-screen native mobile experience.</p>
+                  </div>
+                </div>
+                <div class="guide-item mt-2">
+                  <span class="guide-icon">⚡</span>
+                  <div class="guide-content">
+                    <strong>Capacitor Native Android APK:</strong>
+                    <p>Build native Android <code>.apk</code> with offline support using Capacitor tooling.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Dummy & Sample Data Control Center -->
+            <div class="content-card settings-card settings-segment-data demo-data-control-card">
+              <div class="card-header-flex settings-header-flex">
+                <div class="settings-header-title">
+                  <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                    <span>📊</span> Dummy & Sample Data Control
+                  </h3>
+                  <span class="card-sub" style="margin-top: 4px; display: block;">Switch between sample testing data and a clean ₹0 slate</span>
+                </div>
+                <div id="dataStatusBadgeWrap">
+                  <span class="badge badge-amber" id="dataStatusBadge" style="font-size: 11.5px; padding: 5px 10px;">Sample Data Active</span>
+                </div>
+              </div>
+
+              <div class="demo-data-actions-grid mt-3">
+                <!-- 1. Remove Dummy Data Card -->
+                <div class="demo-action-box demo-box-danger">
+                  <div class="demo-box-top">
+                    <div class="demo-box-title text-rose">
+                      <span>🗑️</span> Remove Dummy Data
+                    </div>
+                    <p class="demo-box-desc">
+                      Removes sample transactions, demo cards, loans & debts. Leaves a clean ₹0 starter account with Indian categories intact for your real finances.
+                    </p>
+                  </div>
+                  <button class="btn btn-danger btn-sm w-100 mt-3" id="removeDemoDataBtn">
+                    <span>🗑️</span> Remove Dummy Data (Clean Slate)
+                  </button>
+                </div>
+
+                <!-- 2. Add Dummy Data Card -->
+                <div class="demo-action-box demo-box-primary">
+                  <div class="demo-box-top">
+                    <div class="demo-box-title text-indigo">
+                      <span>✨</span> Restore Dummy Data
+                    </div>
+                    <p class="demo-box-desc">
+                      Populates comprehensive Indian sample data (HDFC, SBI, ICICI Amazon Pay, Car Loans, Cousin Rajesh debt, Swiggy, Zepto, Salary) anytime.
+                    </p>
+                  </div>
+                  <button class="btn btn-primary btn-sm w-100 mt-3" id="resetDemoDataBtn">
+                    <span>✨</span> Add Sample Dummy Data
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- MOBILE BOTTOM NAVIGATION BAR -->
+    <nav class="mobile-bottom-bar" id="mobileBottomBar">
+      <button class="bottom-nav-item active" data-tab="dashboard">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Home</span>
+      </button>
+      <button class="bottom-nav-item" data-tab="transactions">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        <span>History</span>
+      </button>
+      <button class="bottom-nav-fab" id="mobileFabBtn" aria-label="Add Transaction">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </button>
+      <button class="bottom-nav-item" data-tab="carryover">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+        <span>Rollover</span>
+      </button>
+      <button class="bottom-nav-item" data-tab="reports">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span>Reports</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODALS                                         -->
+  <!-- ============================================== -->
+
+  <!-- 1. ADD / EDIT TRANSACTION MODAL -->
+  <div class="modal-backdrop" id="modalTransaction">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalTransactionTitle">Log New Transaction</h3>
+        <button class="modal-close-btn" data-close="modalTransaction">&times;</button>
+      </div>
+      <form id="formTransaction" class="modal-body">
+        <input type="hidden" id="transEditId">
+
+        <!-- Type Selector Pills -->
+        <div class="type-toggle-group">
+          <label class="type-pill active" data-type="expense">
+            <input type="radio" name="transType" value="expense" checked> 💸 Expense
+          </label>
+          <label class="type-pill" data-type="income">
+            <input type="radio" name="transType" value="income"> 💰 Income
+          </label>
+          <label class="type-pill" data-type="transfer">
+            <input type="radio" name="transType" value="transfer"> ⇄ Transfer
+          </label>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="transAmount">Amount (₹) *</label>
+            <input type="number" step="0.01" min="0.01" id="transAmount" class="form-control text-lg" placeholder="0.00" required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="transDate">Date *</label>
+            <input type="date" id="transDate" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="form-group" id="transCategoryGroup">
+          <label for="transCategory">Category *</label>
+          <select id="transCategory" class="form-control"></select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1" id="transAccountGroup">
+            <label for="transAccount" id="transAccountLabel">Account *</label>
+            <select id="transAccount" class="form-control"></select>
+          </div>
+          <div class="form-group flex-1" id="transDestAccountGroup" style="display: none;">
+            <label for="transDestAccount">Destination Account *</label>
+            <select id="transDestAccount" class="form-control"></select>
+          </div>
+          <div class="form-group flex-1" id="transPaymentModeGroup">
+            <label for="transPaymentMode">Payment Mode</label>
+            <select id="transPaymentMode" class="form-control">
+              <option value="upi">UPI (GooglePay / PhonePe / Paytm)</option>
+              <option value="card">Debit / Credit Card</option>
+              <option value="netbanking">Net Banking / IMPS / NEFT</option>
+              <option value="cash">Cash</option>
+              <option value="cheque">Cheque</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Optional links to Credit Card, Loan, or Debt -->
+        <div class="accordion-item" id="transOptionalLinksWrap">
+          <button type="button" class="accordion-header" id="toggleOptionalLinks">
+            <span>Link to Card, Loan, or Friend/Relative Debt (Optional)</span>
+            <span class="chevron">▼</span>
+          </button>
+          <div class="accordion-content" id="optionalLinksContent" style="display: none;">
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="transCardLink">Used Card</label>
+                <select id="transCardLink" class="form-control">
+                  <option value="">None (Standard Account)</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label for="transLoanLink">Loan EMI Link</label>
+                <select id="transLoanLink" class="form-control">
+                  <option value="">None</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label for="transBorrowLink">Friend/Relative Debt Link</label>
+                <select id="transBorrowLink" class="form-control">
+                  <option value="">None</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="transDescription">Description / Notes</label>
+          <input type="text" id="transDescription" class="form-control" placeholder="e.g. Swiggy Dinner, Zepto Groceries, Salary">
+        </div>
+
+        <div class="form-group">
+          <label for="transTags">Tags (comma separated)</label>
+          <input type="text" id="transTags" class="form-control" placeholder="#groceries,#dinner,#office">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalTransaction">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveTransactionBtn">Save Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. ADD / EDIT BANK ACCOUNT MODAL -->
+  <div class="modal-backdrop" id="modalAccount">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalAccountTitle">Add Bank Account / Wallet</h3>
+        <button class="modal-close-btn" data-close="modalAccount">&times;</button>
+      </div>
+      <form id="formAccount" class="modal-body">
+        <input type="hidden" id="accountEditId">
+        <div class="form-group">
+          <label for="accName">Account Display Name *</label>
+          <input type="text" id="accName" class="form-control" placeholder="e.g. HDFC Salary Account" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="accType">Account Type *</label>
+            <select id="accType" class="form-control" required>
+              <option value="bank">Bank Checking / Salary</option>
+              <option value="savings">Savings Account</option>
+              <option value="cash">Cash / Physical Wallet</option>
+              <option value="wallet">Digital Wallet</option>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="accBalance">Initial Balance (₹) *</label>
+            <input type="number" step="0.01" id="accBalance" class="form-control" placeholder="0.00" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="accInstitution">Bank / Institution Name</label>
+            <input type="text" id="accInstitution" class="form-control" placeholder="e.g. HDFC Bank, SBI, ICICI">
+          </div>
+          <div class="form-group flex-1">
+            <label for="accNumberMask">Account Number (Masked)</label>
+            <input type="text" id="accNumberMask" class="form-control" placeholder="•••• 1234">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="accColor">Card Accent Color</label>
+          <input type="color" id="accColor" class="form-control form-color" value="#004c8f">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalAccount">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. ADD / EDIT CARD MODAL -->
+  <div class="modal-backdrop" id="modalCard">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalCardTitle">Add Credit or Debit Card</h3>
+        <button class="modal-close-btn" data-close="modalCard">&times;</button>
+      </div>
+      <form id="formCard" class="modal-body">
+        <input type="hidden" id="cardEditId">
+        <div class="form-group">
+          <label for="cardName">Card Name *</label>
+          <input type="text" id="cardName" class="form-control" placeholder="e.g. HDFC Regalia Gold, ICICI Amazon Pay" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="cardType">Card Type *</label>
+            <select id="cardType" class="form-control" required>
+              <option value="credit">Credit Card</option>
+              <option value="debit">Debit Card</option>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="cardNetwork">Network</label>
+            <select id="cardNetwork" class="form-control">
+              <option value="visa">Visa</option>
+              <option value="mastercard">MasterCard</option>
+              <option value="rupay">RuPay</option>
+              <option value="amex">American Express</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Add-on Card Option for Credit Cards -->
+        <div class="form-group mb-3" id="cardIsAddonWrap" style="background: rgba(99, 102, 241, 0.08); padding: 12px 14px; border-radius: 10px; border: 1px dashed rgba(99, 102, 241, 0.3);">
+          <label class="d-flex align-items-center gap-2 m-0" style="cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="cardIsAddon" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+            <span><strong>This is an Add-on / Supplementary Card</strong> (Shares credit limit with another card)</span>
+          </label>
+        </div>
+
+        <!-- Add-on Card Specific Details -->
+        <div id="cardAddonFields" style="display: none; background: rgba(30, 41, 59, 0.5); padding: 14px; border-radius: 10px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.08);">
+          <div class="form-group mb-2">
+            <label for="cardParentCard">Select Primary Credit Card *</label>
+            <select id="cardParentCard" class="form-control">
+              <option value="">-- Select Primary Card to share limit --</option>
+            </select>
+          </div>
+          <div class="form-group m-0">
+            <label for="cardSubLimit">Monthly Sub-Limit / Spend Cap (₹)</label>
+            <input type="number" step="0.01" id="cardSubLimit" class="form-control" placeholder="Optional e.g. 25000 (Leave 0 for full shared limit)">
+            <small class="text-muted" style="font-size: 11px; display: block; margin-top: 4px;">Optional spend limit for family member. Available balance is bounded by primary shared limit.</small>
+          </div>
+          <div class="mt-2" style="font-size: 11.5px; color: #a5b4fc; display: flex; align-items: center; gap: 6px;">
+            <span>ℹ️</span> <span>Credit limit shares with primary card. Billing cycle & due date can be set independently or synced.</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="cardLast4">Last 4 Digits</label>
+            <input type="text" id="cardLast4" class="form-control" maxlength="4" placeholder="4401">
+          </div>
+          <div class="form-group flex-1" id="cardCreditLimitGroup">
+            <label for="cardCreditLimit">Total Credit Limit (₹)</label>
+            <input type="number" step="0.01" id="cardCreditLimit" class="form-control" placeholder="100000.00">
+          </div>
+          <div class="form-group flex-1" id="cardAvailableLimitGroup">
+            <label for="cardAvailableLimit">Available Limit (₹)</label>
+            <input type="number" step="0.01" id="cardAvailableLimit" class="form-control" placeholder="100000.00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="cardBillingStartDay">Cycle Start Day (1-31)</label>
+            <input type="number" id="cardBillingStartDay" min="1" max="31" class="form-control" value="24" placeholder="24">
+          </div>
+          <div class="form-group flex-1">
+            <label for="cardBillingDay">Statement / End Day (1-31)</label>
+            <input type="number" id="cardBillingDay" min="1" max="31" class="form-control" value="22" placeholder="22">
+          </div>
+          <div class="form-group flex-1">
+            <label for="cardDueDay">Payment Due Day (1-31)</label>
+            <input type="number" id="cardDueDay" min="1" max="31" class="form-control" value="11" placeholder="11">
+          </div>
+        </div>
+        <div id="cardCyclePreviewBanner" style="font-size: 11.5px; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25); padding: 7px 10px; border-radius: 6px; margin-bottom: 12px; color: #c7d2fe; display: flex; align-items: center; gap: 6px;">
+          <span>💡</span> <span id="cardCyclePreviewText">Cycle: 24th to 22nd → Statement generates on 22nd → Payment due on 11th (~20 days grace).</span>
+        </div>
+        <div class="form-group">
+          <label for="cardLinkedAccount" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Linked Bank Account (Optional)</span>
+            <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">Auto-Debit / Bill Pay</span>
+          </label>
+          <select id="cardLinkedAccount" class="form-control">
+            <option value="">None / Standalone Card (No Account at this Bank)</option>
+          </select>
+          <small class="text-muted" style="font-size: 11px; display: block; margin-top: 4px;">
+            Select your bank account if this card has Auto-Debit or was issued with your savings/checking account. Leave as <strong>"None / Standalone Card"</strong> if this is a standalone card (e.g. Amazon Pay, SBI, Amex, Flipkart Axis) where you do not hold a bank account.
+          </small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalCard">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Card</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3B. CREDIT CARD BILLING CYCLES & STATEMENT INSPECTOR MODAL -->
+  <div class="modal-backdrop" id="modalBillingCycle">
+    <div class="modal-dialog" style="max-width: 740px; width: 95%;">
+      <div class="modal-header">
+        <div>
+          <h3 id="billingCycleModalTitle" style="display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px;">
+            <span>💳</span> <span id="billingCycleCardName">Card Billing Cycles & Statements</span>
+          </h3>
+          <div id="billingCycleCardMeta" style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+            Loading cycle details...
+          </div>
+        </div>
+        <button class="modal-close" data-close="modalBillingCycle">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <!-- Cycle Flow Tracker -->
+        <div class="cycle-timeline-box" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 6px;">
+            <span>Cycle Start</span>
+            <span id="cycleTodayIndicator" style="color: #38bdf8; font-weight: 600;">Current Date</span>
+            <span>Statement Date</span>
+            <span>Payment Due</span>
+          </div>
+          <div style="position: relative; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
+            <div id="cycleProgressFill" style="position: absolute; left: 0; top: 0; height: 100%; width: 50%; background: linear-gradient(90deg, #6366f1, #38bdf8);"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #f8fafc;">
+            <span id="cycleStartDayLabel">24 Sep</span>
+            <span id="cycleTodayLabel" style="color: #38bdf8;">Today</span>
+            <span id="cycleStmtDayLabel">22 Oct</span>
+            <span id="cycleDueDayLabel" style="color: #fbbf24;">11 Nov</span>
+          </div>
+        </div>
+
+        <!-- 3 Cycle Tabs: Previous Month Bill, Current Month Active, Next Month Preview -->
+        <div class="cycle-tabs" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm cycle-tab-btn active" data-cycle-target="prevCyclePane" id="tabPrevCycle">
+            <span>📄 Previous Month Bill</span>
+          </button>
+          <button type="button" class="btn btn-sm cycle-tab-btn" data-cycle-target="currCyclePane" id="tabCurrCycle">
+            <span>⚡ This Month Active Cycle</span>
+          </button>
+          <button type="button" class="btn btn-sm cycle-tab-btn" data-cycle-target="nextCyclePane" id="tabNextCycle">
+            <span>🔮 Next Month Preview</span>
+          </button>
+        </div>
+
+        <!-- Previous Cycle Pane -->
+        <div class="cycle-pane" id="prevCyclePane">
+          <div class="card p-3 mb-3" style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <span class="badge" id="prevCycleStatusBadge" style="font-size: 11px; margin-bottom: 6px;">DUE</span>
+                <div style="font-size: 13px; color: var(--text-muted);" id="prevCycleDates">24 Aug 2026 to 22 Sep 2026</div>
+                <div style="font-size: 20px; font-weight: 700; color: #f8fafc; margin-top: 4px;" id="prevCycleAmount">₹0.00</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 12px; color: var(--text-muted);">Statement Generated: <strong id="prevCycleStmtDate">22 Sep 2026</strong></div>
+                <div style="font-size: 12px; color: #fbbf24; margin-top: 2px;">Due Date: <strong id="prevCycleDueDate">11 Oct 2026</strong></div>
+                <button type="button" class="btn btn-emerald btn-sm mt-2" id="prevCyclePayBtn" style="padding: 6px 14px; font-size: 12px;">
+                  💳 Pay This Statement Bill
+                </button>
+              </div>
+            </div>
+          </div>
+          <h5 style="font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 8px;">Transactions in this Statement:</h5>
+          <div id="prevCycleTxList" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
+        <!-- Current Cycle Pane -->
+        <div class="cycle-pane" id="currCyclePane" style="display: none;">
+          <div class="card p-3 mb-3" style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <span class="badge badge-primary" id="currCycleStatusBadge" style="font-size: 11px; margin-bottom: 6px;">ACTIVE UNBILLED</span>
+                <div style="font-size: 13px; color: var(--text-muted);" id="currCycleDates">24 Sep 2026 to 22 Oct 2026</div>
+                <div style="font-size: 20px; font-weight: 700; color: #38bdf8; margin-top: 4px;" id="currCycleAmount">₹0.00</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 12px; color: #38bdf8;">Next Bill Generates: <strong id="currCycleStmtDate">22 Oct 2026</strong></div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Estimated Due Date: <strong id="currCycleDueDate">11 Nov 2026</strong></div>
+                <div style="font-size: 11.5px; color: #94a3b8; margin-top: 4px;" id="currCycleDaysLeft">Bill in 13 days</div>
+              </div>
+            </div>
+          </div>
+          <h5 style="font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 8px;">Current Unbilled Transactions:</h5>
+          <div id="currCycleTxList" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
+        <!-- Next Cycle Pane -->
+        <div class="cycle-pane" id="nextCyclePane" style="display: none;">
+          <div class="card p-3 mb-3" style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;">
+            <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #cbd5e1; font-size: 11px; margin-bottom: 6px;">UPCOMING CYCLE</span>
+            <div style="font-size: 14px; font-weight: 600; color: #f8fafc;" id="nextCycleDates">24 Oct 2026 to 22 Nov 2026</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+              <div style="background: rgba(255, 255, 255, 0.04); padding: 10px; border-radius: 8px;">
+                <div style="font-size: 11px; color: var(--text-muted);">Statement Generation Date</div>
+                <div style="font-size: 14px; font-weight: 600; color: #f8fafc; margin-top: 2px;" id="nextCycleStmtDate">22 Nov 2026</div>
+              </div>
+              <div style="background: rgba(255, 255, 255, 0.04); padding: 10px; border-radius: 8px;">
+                <div style="font-size: 11px; color: var(--text-muted);">Payment Due Date</div>
+                <div style="font-size: 14px; font-weight: 600; color: #fbbf24; margin-top: 2px;" id="nextCycleDueDate">11 Dec 2026</div>
+              </div>
+            </div>
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 10px; margin-top: 12px; font-size: 12px; color: #6ee7b7; display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 16px;">💡</span>
+              <span><strong>Smart Spends Tip:</strong> Purchases made on <strong id="nextCycleStartTip">24 Oct</strong> enjoy maximum interest-free credit of up to <strong id="nextCycleGraceTip">48 days</strong> until <strong id="nextCycleDueTip">11 Dec</strong>!</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="modalBillingCycle">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ADD / EDIT LOAN MODAL -->
+  <div class="modal-backdrop" id="modalLoan">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalLoanTitle">Add Loan & EMI Schedule</h3>
+        <button class="modal-close-btn" data-close="modalLoan">&times;</button>
+      </div>
+      <form id="formLoan" class="modal-body">
+        <input type="hidden" id="loanEditId">
+        <div class="form-group">
+          <label for="loanTitle">Loan Title *</label>
+          <input type="text" id="loanTitle" class="form-control" placeholder="e.g. HDFC Car Loan, SBI Home Loan" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="loanType">Loan Type *</label>
+            <select id="loanType" class="form-control" required>
+              <option value="car">Car / Vehicle Loan</option>
+              <option value="home">Home / Housing Loan</option>
+              <option value="personal">Personal Loan</option>
+              <option value="education">Education Loan</option>
+              <option value="gold">Gold Loan</option>
+              <option value="other">Other Loan</option>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="loanLender">Lender / Bank Name</label>
+            <input type="text" id="loanLender" class="form-control" placeholder="e.g. HDFC Bank, SBI">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="loanPrincipal">Principal Amount (₹) *</label>
+            <input type="number" step="0.01" id="loanPrincipal" class="form-control" required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="loanCurrentBal">Current Balance Remaining (₹) *</label>
+            <input type="number" step="0.01" id="loanCurrentBal" class="form-control" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="loanEmi">Monthly EMI Amount (₹) *</label>
+            <input type="number" step="0.01" id="loanEmi" class="form-control" required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="loanDueDay">EMI Due Day of Month</label>
+            <input type="number" min="1" max="31" id="loanDueDay" class="form-control" value="5">
+          </div>
+          <div class="form-group flex-1">
+            <label for="loanInterest">Interest Rate (% p.a.)</label>
+            <input type="number" step="0.01" id="loanInterest" class="form-control" placeholder="8.5">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalLoan">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Loan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. ADD / EDIT BORROWS & LENT (FRIENDS & RELATIVES) MODAL -->
+  <div class="modal-backdrop" id="modalBorrow">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalBorrowTitle">Record Borrow / Lent (Friends & Relatives)</h3>
+        <button class="modal-close-btn" data-close="modalBorrow">&times;</button>
+      </div>
+      <form id="formBorrow" class="modal-body">
+        <input type="hidden" id="borrowEditId">
+
+        <div class="type-toggle-group">
+          <label class="type-pill active" data-dir="borrowed">
+            <input type="radio" name="borrowDirection" value="borrowed" checked> 🤝 Borrowed From (You Owe)
+          </label>
+          <label class="type-pill" data-dir="lent">
+            <input type="radio" name="borrowDirection" value="lent"> 💸 Lent To (They Owe You)
+          </label>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="borrowPerson">Person Name *</label>
+            <input type="text" id="borrowPerson" class="form-control" placeholder="e.g. Rajesh (Cousin), Amit (Friend)" required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="borrowRelationship">Relationship</label>
+            <select id="borrowRelationship" class="form-control">
+              <option value="friend">Friend</option>
+              <option value="relative">Relative / Cousin</option>
+              <option value="family">Immediate Family</option>
+              <option value="colleague">Colleague / Work</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="borrowPrincipal">Principal Amount (₹) *</label>
+            <input type="number" step="0.01" id="borrowPrincipal" class="form-control" required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="borrowRemaining">Remaining Balance (₹)</label>
+            <input type="number" step="0.01" id="borrowRemaining" class="form-control">
+          </div>
+        </div>
+
+        <!-- Bank Account & Payment Mode Linkage -->
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="borrowAccount" id="borrowAccountLabel">Bank Account Received Into *</label>
+            <select id="borrowAccount" class="form-control" required></select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="borrowPaymentMode">Payment Mode</label>
+            <select id="borrowPaymentMode" class="form-control">
+              <option value="upi">UPI (GooglePay / PhonePe / Paytm)</option>
+              <option value="bank_transfer">Bank Transfer / IMPS / NEFT</option>
+              <option value="cash">Cash in Hand</option>
+              <option value="cheque">Cheque</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="borrow-sync-notice-box" id="borrowSyncNoticeBox" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: #a7f3d0; line-height: 1.4;">
+          <span id="borrowSyncNoticeText">💡 <strong>Bank Account Sync</strong>: Money borrowed will be credited (+) to this account balance and recorded as an Inflow in your Transactions history.</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="borrowDate">Date Taken / Lent *</label>
+            <input type="date" id="borrowDate" class="form-control" required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="borrowDueDate">Expected Due Date</label>
+            <input type="date" id="borrowDueDate" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="borrowPhone">Phone / Contact (Optional)</label>
+          <input type="text" id="borrowPhone" class="form-control" placeholder="+91 98765 43210">
+        </div>
+
+        <div class="form-group">
+          <label for="borrowNotes">Notes</label>
+          <input type="text" id="borrowNotes" class="form-control" placeholder="e.g. Emergency loan for car service">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalBorrow">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Debt Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 6. REPAY / SETTLE DEBT MODAL -->
+  <div class="modal-backdrop" id="modalRepay">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3 id="modalRepayTitle">Settle / Repay Debt</h3>
+        <button class="modal-close-btn" data-close="modalRepay">&times;</button>
+      </div>
+      <form id="formRepay" class="modal-body">
+        <input type="hidden" id="repayBorrowId">
+        <div class="repay-person-info" id="repayPersonInfo"></div>
+        <div class="form-group">
+          <label for="repayAmount">Payment Amount (₹) *</label>
+          <input type="number" step="0.01" id="repayAmount" class="form-control text-lg" required>
+        </div>
+        <div class="form-group">
+          <label for="repayAccount">Account to Debit/Credit *</label>
+          <select id="repayAccount" class="form-control" required></select>
+        </div>
+        <div class="form-group">
+          <label for="repayDate">Payment Date *</label>
+          <input type="date" id="repayDate" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="repayMode">Payment Mode</label>
+          <select id="repayMode" class="form-control">
+            <option value="upi">UPI (GooglePay / PhonePe)</option>
+            <option value="cash">Cash</option>
+            <option value="bank_transfer">Bank Transfer / IMPS</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalRepay">Cancel</button>
+          <button type="submit" class="btn btn-emerald">Confirm Settlement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. INTER-ACCOUNT TRANSFER MODAL -->
+  <div class="modal-backdrop" id="modalTransfer">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3>Inter-Account Transfer</h3>
+        <button class="modal-close-btn" data-close="modalTransfer">&times;</button>
+      </div>
+      <form id="formTransfer" class="modal-body">
+        <div class="form-group">
+          <label for="transferFromAcc">From Source Account *</label>
+          <select id="transferFromAcc" class="form-control" required></select>
+        </div>
+        <div class="form-group">
+          <label for="transferToAcc">To Destination Account *</label>
+          <select id="transferToAcc" class="form-control" required></select>
+        </div>
+        <div class="form-group">
+          <label for="transferAmount">Transfer Amount (₹) *</label>
+          <input type="number" step="0.01" id="transferAmount" class="form-control text-lg" placeholder="0.00" required>
+        </div>
+        <div class="form-group">
+          <label for="transferDate">Transfer Date *</label>
+          <input type="date" id="transferDate" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="transferNotes">Notes</label>
+          <input type="text" id="transferNotes" class="form-control" placeholder="e.g. Monthly savings buffer transfer">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalTransfer">Cancel</button>
+          <button type="submit" class="btn btn-primary">Execute Transfer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 8. CARRYOVER EXECUTE WIZARD MODAL -->
+  <div class="modal-backdrop" id="modalCarryoverWizard">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Carry Forward to Next Month</h3>
+        <button class="modal-close-btn" data-close="modalCarryoverWizard">&times;</button>
+      </div>
+      <form id="formCarryoverExecute" class="modal-body">
+        <div class="carryover-wizard-summary" id="carryoverWizardSummary"></div>
+
+        <div class="form-group mt-3">
+          <label for="carryoverCustomAmount">Carry Forward Amount (₹) *</label>
+          <input type="number" step="0.01" id="carryoverCustomAmount" class="form-control text-lg" required>
+          <small class="form-hint">Defaults to entire monthly closing net balance. You can adjust if allocating part to fixed savings.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="carryoverNotes">Rollover Notes / Memo</label>
+          <input type="text" id="carryoverNotes" class="form-control" placeholder="e.g. Rolled over full surplus to next month">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalCarryoverWizard">Cancel</button>
+          <button type="submit" class="btn btn-indigo">Confirm Rollover</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 9. ADD CATEGORY MODAL -->
+  <div class="modal-backdrop" id="modalCategory">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3>Add New Category</h3>
+        <button class="modal-close-btn" data-close="modalCategory">&times;</button>
+      </div>
+      <form id="formCategory" class="modal-body">
+        <div class="form-group">
+          <label for="catName">Category Name *</label>
+          <input type="text" id="catName" class="form-control" placeholder="e.g. Pets & Veterinary" required>
+        </div>
+        <div class="form-group">
+          <label for="catType">Type *</label>
+          <select id="catType" class="form-control" required>
+            <option value="expense">Expense Category</option>
+            <option value="income">Income Category</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="catBudget">Monthly Budget Limit (₹)</label>
+          <input type="number" step="0.01" id="catBudget" class="form-control" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label for="catColor">Color</label>
+          <input type="color" id="catColor" class="form-control form-color" value="#6366f1">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalCategory">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 10. MANAGE PROFILES MODAL -->
+  <div class="modal-backdrop" id="modalManageProfiles">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3>Manage Financial Profiles</h3>
+          <span class="card-sub">Each profile has isolated accounts, cards, loans, debts, and transactions.</span>
+        </div>
+        <button class="modal-close-btn" data-close="modalManageProfiles">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="profiles-modal-toolbar">
+          <span class="profiles-count-badge" id="profilesCountBadge">2 Profiles Available</span>
+          <button class="btn btn-primary btn-sm" id="modalOpenAddProfileBtn">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>+ Add New Profile</span>
+          </button>
+        </div>
+        <div class="profiles-cards-grid mt-3" id="manageProfilesCardsList">
+          <!-- Dynamically populated with profile cards -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="modalManageProfiles">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. ADD / EDIT PROFILE FORM MODAL -->
+  <div class="modal-backdrop" id="modalProfileForm">
+    <div class="modal-dialog modal-md">
+      <div class="modal-header">
+        <h3 id="modalProfileTitle">Add New Profile</h3>
+        <button class="modal-close-btn" data-close="modalProfileForm">&times;</button>
+      </div>
+      <form id="formProfile" class="modal-body">
+        <input type="hidden" id="profileFormId" value="">
+
+        <div class="form-group">
+          <label for="profileFormName">Profile Name *</label>
+          <input type="text" id="profileFormName" class="form-control" placeholder="e.g. Vacation & Travel, Business, Rental..." required>
+        </div>
+
+        <div class="form-group">
+          <label for="profileFormDesc">Description / Purpose</label>
+          <input type="text" id="profileFormDesc" class="form-control" placeholder="e.g. Budget and expenses for family vacation">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profileFormCurrency">Default Currency</label>
+            <select id="profileFormCurrency" class="form-control">
+              <option value="INR" selected>🇮🇳 Indian Rupee (₹ INR)</option>
+              <option value="USD">🇺🇸 US Dollar ($ USD)</option>
+              <option value="EUR">🇪🇺 Euro (€ EUR)</option>
+              <option value="GBP">🇬🇧 British Pound (£ GBP)</option>
+              <option value="AED">🇦🇪 UAE Dirham (AED)</option>
+              <option value="SGD">🇸🇬 Singapore Dollar (S$ SGD)</option>
+              <option value="CAD">🇨🇦 Canadian Dollar (C$ CAD)</option>
+              <option value="AUD">🇦🇺 Australian Dollar (A$ AUD)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="profileFormColor">Profile Theme Color</label>
+            <div class="color-picker-flex">
+              <input type="color" id="profileFormColor" class="form-control form-color" value="#4f46e5">
+              <div class="color-preset-swatches" id="colorPresetSwatches">
+                <button type="button" class="swatch-btn" data-color="#4f46e5" style="background-color: #4f46e5;" title="Indigo"></button>
+                <button type="button" class="swatch-btn" data-color="#10b981" style="background-color: #10b981;" title="Emerald"></button>
+                <button type="button" class="swatch-btn" data-color="#8b5cf6" style="background-color: #8b5cf6;" title="Violet"></button>
+                <button type="button" class="swatch-btn" data-color="#06b6d4" style="background-color: #06b6d4;" title="Cyan"></button>
+                <button type="button" class="swatch-btn" data-color="#f59e0b" style="background-color: #f59e0b;" title="Amber"></button>
+                <button type="button" class="swatch-btn" data-color="#f43f5e" style="background-color: #f43f5e;" title="Rose"></button>
+                <button type="button" class="swatch-btn" data-color="#2563eb" style="background-color: #2563eb;" title="Blue"></button>
+                <button type="button" class="swatch-btn" data-color="#0f172a" style="background-color: #0f172a;" title="Slate"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Profile Icon</label>
+          <input type="hidden" id="profileFormIcon" value="user">
+          <div class="icon-selector-grid" id="profileIconSelector">
+            <button type="button" class="icon-option active" data-icon="user" title="User / Personal">👤</button>
+            <button type="button" class="icon-option" data-icon="briefcase" title="Business / Work">💼</button>
+            <button type="button" class="icon-option" data-icon="home" title="Home / Family">🏠</button>
+            <button type="button" class="icon-option" data-icon="building" title="Enterprise / Office">🏢</button>
+            <button type="button" class="icon-option" data-icon="plane" title="Travel & Vacation">✈️</button>
+            <button type="button" class="icon-option" data-icon="shopping" title="Shopping / Retail">🛍️</button>
+            <button type="button" class="icon-option" data-icon="sparkles" title="Savings & Goals">✨</button>
+            <button type="button" class="icon-option" data-icon="heart" title="Health & Wellness">❤️</button>
+            <button type="button" class="icon-option" data-icon="dollar" title="Investments">💰</button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalProfileForm" id="cancelProfileBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- AUTHENTICATION OVERLAY (Login & Register)      -->
+  <!-- ============================================== -->
+  <div class="auth-overlay" id="authOverlay" style="display: none;">
+    <div class="auth-card-container">
+      <div class="auth-brand-header">
+        <div class="auth-logo-badge">₹</div>
+        <div class="auth-brand-text">
+          <h1>PaisaTrack</h1>
+          <p>Personal Expenditure & Wealth Monitor</p>
+        </div>
+      </div>
+
+      <!-- Auth Switcher Tabs -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="tabSignInBtn" data-target="signInTab">Sign In</button>
+        <button type="button" class="auth-tab-btn" id="tabSignUpBtn" data-target="signUpTab">Create Account</button>
+      </div>
+
+      <div class="auth-alert" id="authAlert" style="display: none;"></div>
+
+      <!-- SIGN IN TAB -->
+      <div class="auth-tab-pane active" id="signInTab">
+        <form id="formSignIn" class="auth-form">
+          <div class="form-group">
+            <label for="loginUsername">Username or Email</label>
+            <div class="input-with-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <input type="text" id="loginUsername" class="form-control" placeholder="Enter username or email" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <div class="input-with-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <input type="password" id="loginPassword" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSubmitLogin">
+            <span>Sign In to PaisaTrack</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </form>
+
+        <div class="auth-divider"><span>OR</span></div>
+
+        <!-- Quick Demo Login Button -->
+        <button type="button" class="btn btn-demo-quick" id="btnQuickDemoLogin" title="One-click Login as Demo User">
+          <span class="demo-bolt">⚡</span>
+          <span>Quick Demo Login (Pre-loaded Sample Data)</span>
+        </button>
+      </div>
+
+      <!-- SIGN UP TAB -->
+      <div class="auth-tab-pane" id="signUpTab" style="display: none;">
+        <form id="formSignUp" class="auth-form">
+          <div class="form-group">
+            <label for="regFullName">Full Name</label>
+            <div class="input-with-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <input type="text" id="regFullName" class="form-control" placeholder="e.g. Ranjith Kumar" required autocomplete="name">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="regUsername">Username</label>
+            <div class="input-with-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"></path></svg>
+              <input type="text" id="regUsername" class="form-control" placeholder="Unique username (min 3 chars)" required minlength="3" autocomplete="username">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="regEmail">Email Address</label>
+            <div class="input-with-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              <input type="email" id="regEmail" class="form-control" placeholder="e.g. ranjith@example.com" required autocomplete="email">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="regPassword">Create Password</label>
+            <div class="input-with-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <input type="password" id="regPassword" class="form-control" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSubmitRegister">
+            <span>Create Free Account</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </form>
+      </div>
+
+      <div class="auth-footer-note">
+        🔒 <span>Encrypted & isolated financial space with PBKDF2-SHA256 password protection</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Application Logic Scripts -->
+  <script src="/static/js/charts.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

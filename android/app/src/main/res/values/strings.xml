@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PaisaTrack</string>
+    <string name="title_activity_main">PaisaTrack</string>
+    <string name="package_name">com.paisatrack.expenditure</string>
+    <string name="custom_url_scheme">com.paisatrack.expenditure</string>
+</resources>
