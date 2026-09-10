@@ -22,13 +22,17 @@ from app.models import (
     LoanCreate, LoanUpdate, LoanEMIPaymentRequest,
     BorrowCreate, BorrowUpdate, BorrowRepaymentRequest,
     CategoryCreate, CategoryUpdate,
-    CarryoverExecuteRequest, SettingsUpdate
+    CarryoverExecuteRequest, SettingsUpdate,
+    InvestmentCreate, InvestmentUpdate,
+    SalaryPlanUpdate,
+    FinancialGoalCreate, FinancialGoalUpdate
 )
 from app.calculations import (
     CURRENCY_RATES, format_inr_currency,
     apply_transaction_balance,
     calculate_month_carryover, execute_month_carryover,
-    get_month_wise_report, get_day_wise_report
+    get_month_wise_report, get_day_wise_report,
+    calculate_investment_summary, calculate_salary_plan_analysis
 )
 from app.seed_data import seed_database, clear_dummy_data
 from app.security import hash_password, verify_password, generate_session_token
@@ -442,7 +446,17 @@ def get_dashboard_summary(
         """, (pid,))
         recent_transactions = [dict(row) for row in cursor.fetchall()]
 
-        # 8. User Settings
+        # 8. Investment Summary
+        investments_summary = calculate_investment_summary(cursor, pid)
+        portfolio_value = investments_summary["current_value"]
+
+        # 9. Salary Plan & Financial Health Analysis
+        salary_plan_analysis = calculate_salary_plan_analysis(cursor, pid, y, m)
+
+        # 10. True Net Worth = Accounts Liquid Balance + Portfolio Value + Debts Lent Receivable - Active Loans - Debts Borrowed
+        true_net_worth = round(total_networth + portfolio_value + total_lent_receivable - total_loan_balance - total_borrowed_payable, 2)
+
+        # 11. User Settings
         cursor.execute("SELECT key, value FROM settings")
         settings = {row["key"]: row["value"] for row in cursor.fetchall()}
 
@@ -450,7 +464,11 @@ def get_dashboard_summary(
             "profile": current_profile,
             "selected_period": {"year": y, "month": m, "month_name": calendar.month_name[m]},
             "total_networth": round(total_networth, 2),
+            "portfolio_value": round(portfolio_value, 2),
+            "true_net_worth": true_net_worth,
             "carryover": carryover_data,
+            "investments_summary": investments_summary,
+            "salary_plan_analysis": salary_plan_analysis,
             "total_loan_balance": round(total_loan_balance, 2),
             "total_borrowed_payable": round(total_borrowed_payable, 2),
             "total_lent_receivable": round(total_lent_receivable, 2),
@@ -1792,9 +1810,9 @@ def create_category(
         cursor = conn.cursor()
         pid = resolve_profile_id(cursor, cat.profile_id, x_profile_id, current_user["id"])
         cursor.execute("""
-        INSERT INTO categories (profile_id, name, type, icon, color, budget_limit)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """, (pid, cat.name, cat.type, cat.icon or "tag", cat.color or "#64748b", cat.budget_limit or 0.0))
+        INSERT INTO categories (profile_id, name, type, icon, color, budget_limit, classification)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (pid, cat.name, cat.type, cat.icon or "tag", cat.color or "#64748b", cat.budget_limit or 0.0, cat.classification or "need"))
         cat_id = cursor.lastrowid
         cursor.execute("SELECT * FROM categories WHERE id = ?", (cat_id,))
         return {"success": True, "category": dict(cursor.fetchone())}
@@ -1914,6 +1932,271 @@ def get_data_status():
             "loan_count": lc,
             "debt_count": dc
         }
+
+# ====================================================================
+# Investments & Portfolio REST APIs (Profile-Isolated)
+# ====================================================================
+@app.get("/api/investments")
+def get_investments(
+    profile_id: Optional[int] = None,
+    x_profile_id: Optional[str] = Header(None),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        pid = resolve_profile_id(cursor, profile_id, x_profile_id, current_user["id"])
+        cursor.execute("""
+        SELECT i.*, a.name as linked_account_name
+        FROM investments i
+        LEFT JOIN accounts a ON i.linked_account_id = a.id
+        WHERE i.profile_id = ?
+        ORDER BY i.status ASC, i.current_value DESC, i.id DESC
+        """, (pid,))
+        investments = [dict(row) for row in cursor.fetchall()]
+        return {"profile_id": pid, "investments": investments}
+
+@app.get("/api/investments/summary")
+def get_investments_summary(
+    profile_id: Optional[int] = None,
+    x_profile_id: Optional[str] = Header(None),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        pid = resolve_profile_id(cursor, profile_id, x_profile_id, current_user["id"])
+        summary = calculate_investment_summary(cursor, pid)
+        return summary
+
+@app.post("/api/investments")
+def create_investment(
+    inv: InvestmentCreate,
+    x_profile_id: Optional[str] = Header(None),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        pid = resolve_profile_id(cursor, inv.profile_id, x_profile_id, current_user["id"])
+        c_val = inv.current_value if inv.current_value > 0 else inv.invested_amount
+        cursor.execute("""
+        INSERT INTO investments (
+            profile_id, name, asset_type, platform, folio_or_account_number,
+            invested_amount, current_value, allocation_category, sip_enabled,
+            sip_amount, sip_day, linked_account_id, start_date, maturity_date, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            pid, inv.name, inv.asset_type, inv.platform or "Zerodha", inv.folio_or_account_number or "",
+            inv.invested_amount, c_val, inv.allocation_category or "wealth",
+            inv.sip_enabled or 0, inv.sip_amount or 0.0, inv.sip_day or 5,
+            inv.linked_account_id, inv.start_date or date.today().isoformat(),
+            inv.maturity_date, inv.notes or ""
+        ))
+        inv_id = cursor.lastrowid
+        cursor.execute("SELECT * FROM investments WHERE id = ?", (inv_id,))
+        return {"success": True, "investment": dict(cursor.fetchone())}
+
+@app.put("/api/investments/{investment_id}")
+def update_investment(
+    investment_id: int,
+    inv: InvestmentUpdate,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT i.* FROM investments i
+        JOIN profiles p ON i.profile_id = p.id
+        WHERE i.id = ? AND p.user_id = ?
+        """, (investment_id, current_user["id"]))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Investment not found or access denied")
+
+        fields = inv.model_dump(exclude_unset=True)
+        if not fields:
+            raise HTTPException(status_code=400, detail="No fields provided")
+        set_clauses = [f"{k} = ?" for k in fields.keys()]
+        values = list(fields.values()) + [investment_id]
+        cursor.execute(f"UPDATE investments SET {', '.join(set_clauses)} WHERE id = ?", values)
+        cursor.execute("SELECT * FROM investments WHERE id = ?", (investment_id,))
+        return {"success": True, "investment": dict(cursor.fetchone())}
+
+@app.delete("/api/investments/{investment_id}")
+def delete_investment(
+    investment_id: int,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT i.* FROM investments i
+        JOIN profiles p ON i.profile_id = p.id
+        WHERE i.id = ? AND p.user_id = ?
+        """, (investment_id, current_user["id"]))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Investment not found or access denied")
+
+        cursor.execute("DELETE FROM investments WHERE id = ?", (investment_id,))
+        return {"success": True, "message": "Investment deleted successfully"}
+
+# ====================================================================
+# Salary Plan & Financial Allocation REST APIs (Profile-Isolated)
+# ====================================================================
+@app.get("/api/salary-plan")
+def get_salary_plan(
+    profile_id: Optional[int] = None,
+    x_profile_id: Optional[str] = Header(None),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        pid = resolve_profile_id(cursor, profile_id, x_profile_id, current_user["id"])
+        cursor.execute("SELECT * FROM salary_plans WHERE profile_id = ?", (pid,))
+        row = cursor.fetchone()
+        if not row:
+            return {
+                "profile_id": pid,
+                "monthly_salary": 75000.0,
+                "rule_type": "50_30_20",
+                "needs_percent": 50.0,
+                "wants_percent": 30.0,
+                "savings_percent": 10.0,
+                "debts_percent": 10.0,
+                "emergency_fund_target_months": 6,
+                "notes": ""
+            }
+        return dict(row)
+
+@app.post("/api/salary-plan")
+def save_salary_plan(
+    plan: SalaryPlanUpdate,
+    x_profile_id: Optional[str] = Header(None),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        pid = resolve_profile_id(cursor, plan.profile_id, x_profile_id, current_user["id"])
+        cursor.execute("""
+        INSERT OR REPLACE INTO salary_plans (
+            profile_id, monthly_salary, rule_type, needs_percent,
+            wants_percent, savings_percent, debts_percent, emergency_fund_target_months, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            pid, plan.monthly_salary, plan.rule_type or "50_30_20",
+            plan.needs_percent if plan.needs_percent is not None else 50.0,
+            plan.wants_percent if plan.wants_percent is not None else 30.0,
+            plan.savings_percent if plan.savings_percent is not None else 10.0,
+            plan.debts_percent if plan.debts_percent is not None else 10.0,
+            plan.emergency_fund_target_months or 6, plan.notes or ""
+        ))
+        cursor.execute("SELECT * FROM salary_plans WHERE profile_id = ?", (pid,))
+        return {"success": True, "plan": dict(cursor.fetchone())}
+
+@app.get("/api/salary-plan/analysis")
+def get_salary_plan_analysis(
+    profile_id: Optional[int] = None,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    x_profile_id: Optional[str] = Header(None),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    today = date.today()
+    y = year or today.year
+    m = month or today.month
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        pid = resolve_profile_id(cursor, profile_id, x_profile_id, current_user["id"])
+        analysis = calculate_salary_plan_analysis(cursor, pid, y, m)
+        return analysis
+
+# ====================================================================
+# Financial Goals REST APIs (Profile-Isolated)
+# ====================================================================
+@app.get("/api/financial-goals")
+def get_financial_goals(
+    profile_id: Optional[int] = None,
+    x_profile_id: Optional[str] = Header(None),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        pid = resolve_profile_id(cursor, profile_id, x_profile_id, current_user["id"])
+        cursor.execute("""
+        SELECT g.*, a.name as linked_account_name, i.name as linked_investment_name
+        FROM financial_goals g
+        LEFT JOIN accounts a ON g.linked_account_id = a.id
+        LEFT JOIN investments i ON g.linked_investment_id = i.id
+        WHERE g.profile_id = ?
+        ORDER BY CASE g.priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, g.id ASC
+        """, (pid,))
+        goals = [dict(row) for row in cursor.fetchall()]
+        return {"profile_id": pid, "goals": goals}
+
+@app.post("/api/financial-goals")
+def create_financial_goal(
+    goal: FinancialGoalCreate,
+    x_profile_id: Optional[str] = Header(None),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        pid = resolve_profile_id(cursor, goal.profile_id, x_profile_id, current_user["id"])
+        cursor.execute("""
+        INSERT INTO financial_goals (
+            profile_id, title, category, target_amount, current_amount,
+            target_date, monthly_contribution, priority, linked_investment_id,
+            linked_account_id, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            pid, goal.title, goal.category or "wealth", goal.target_amount,
+            goal.current_amount or 0.0, goal.target_date,
+            goal.monthly_contribution or 0.0, goal.priority or "medium",
+            goal.linked_investment_id, goal.linked_account_id, goal.notes or ""
+        ))
+        goal_id = cursor.lastrowid
+        cursor.execute("SELECT * FROM financial_goals WHERE id = ?", (goal_id,))
+        return {"success": True, "goal": dict(cursor.fetchone())}
+
+@app.put("/api/financial-goals/{goal_id}")
+def update_financial_goal(
+    goal_id: int,
+    goal: FinancialGoalUpdate,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT g.* FROM financial_goals g
+        JOIN profiles p ON g.profile_id = p.id
+        WHERE g.id = ? AND p.user_id = ?
+        """, (goal_id, current_user["id"]))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Goal not found or access denied")
+
+        fields = goal.model_dump(exclude_unset=True)
+        if not fields:
+            raise HTTPException(status_code=400, detail="No fields provided")
+        set_clauses = [f"{k} = ?" for k in fields.keys()]
+        values = list(fields.values()) + [goal_id]
+        cursor.execute(f"UPDATE financial_goals SET {', '.join(set_clauses)} WHERE id = ?", values)
+        cursor.execute("SELECT * FROM financial_goals WHERE id = ?", (goal_id,))
+        return {"success": True, "goal": dict(cursor.fetchone())}
+
+@app.delete("/api/financial-goals/{goal_id}")
+def delete_financial_goal(
+    goal_id: int,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT g.* FROM financial_goals g
+        JOIN profiles p ON g.profile_id = p.id
+        WHERE g.id = ? AND p.user_id = ?
+        """, (goal_id, current_user["id"]))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Goal not found or access denied")
+
+        cursor.execute("DELETE FROM financial_goals WHERE id = ?", (goal_id,))
+        return {"success": True, "message": "Goal deleted successfully"}
 
 # ====================================================================
 # Static Files & Mobile Shell Mount

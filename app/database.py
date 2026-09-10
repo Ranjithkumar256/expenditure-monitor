@@ -302,8 +302,78 @@ def init_db() -> None:
         );
         """)
 
+        # 10. Investments Portfolio (Mutual Funds, Stocks, FDs, Gold, PPF/EPF, Real Estate, Crypto)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS investments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id INTEGER NOT NULL DEFAULT 1,
+            name TEXT NOT NULL,
+            asset_type TEXT NOT NULL DEFAULT 'mutual_fund', -- 'mutual_fund', 'stocks', 'fixed_deposit', 'gold', 'epf_ppf', 'real_estate', 'crypto', 'other'
+            platform TEXT,                                 -- 'Zerodha', 'Groww', 'Kuvera', 'SBI', 'HDFC'
+            folio_or_account_number TEXT,
+            invested_amount REAL NOT NULL DEFAULT 0.0,
+            current_value REAL NOT NULL DEFAULT 0.0,
+            allocation_category TEXT DEFAULT 'wealth',     -- 'wealth', 'retirement', 'emergency', 'tax_saving', 'future_goal'
+            sip_enabled INTEGER DEFAULT 0,                 -- 1 = Monthly SIP, 0 = Lumpsum
+            sip_amount REAL DEFAULT 0.0,
+            sip_day INTEGER DEFAULT 5,                     -- Day of month SIP is deducted
+            linked_account_id INTEGER,                     -- Bank account linked for SIP
+            start_date TEXT,                               -- YYYY-MM-DD
+            maturity_date TEXT,                            -- YYYY-MM-DD (FDs, Bonds, PPF)
+            status TEXT DEFAULT 'active',                  -- 'active', 'redeemed'
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE,
+            FOREIGN KEY (linked_account_id) REFERENCES accounts(id) ON DELETE SET NULL
+        );
+        """)
+
+        # 11. Salary Plans & Budget Allocation (Needs, Wants, Debts, Savings/Emergency, Investments)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS salary_plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id INTEGER NOT NULL UNIQUE,
+            monthly_salary REAL NOT NULL DEFAULT 0.0,
+            rule_type TEXT DEFAULT '50_30_20',             -- '50_30_20', '60_20_20', 'debt_focus', 'custom'
+            needs_percent REAL DEFAULT 50.0,
+            wants_percent REAL DEFAULT 30.0,
+            savings_percent REAL DEFAULT 10.0,
+            debts_percent REAL DEFAULT 10.0,
+            emergency_fund_target_months INTEGER DEFAULT 6,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+        );
+        """)
+
+        # 12. Financial Goals Tracker (Emergency Fund, House Down Payment, Car, Vacation, Retirement)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS financial_goals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'wealth',       -- 'emergency_fund', 'home', 'vehicle', 'retirement', 'education', 'vacation', 'wealth'
+            target_amount REAL NOT NULL,
+            current_amount REAL NOT NULL DEFAULT 0.0,
+            target_date TEXT,                              -- YYYY-MM-DD
+            monthly_contribution REAL DEFAULT 0.0,
+            priority TEXT DEFAULT 'medium',                -- 'high', 'medium', 'low'
+            status TEXT DEFAULT 'in_progress',             -- 'in_progress', 'achieved', 'paused'
+            linked_investment_id INTEGER,
+            linked_account_id INTEGER,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE,
+            FOREIGN KEY (linked_investment_id) REFERENCES investments(id) ON DELETE SET NULL,
+            FOREIGN KEY (linked_account_id) REFERENCES accounts(id) ON DELETE SET NULL
+        );
+        """)
+
         # Run safe migrations to add profile_id to existing tables if needed
-        for tbl in ["accounts", "cards", "loans", "borrows_lent", "categories", "transactions", "monthly_carryovers"]:
+        for tbl in ["accounts", "cards", "loans", "borrows_lent", "categories", "transactions", "monthly_carryovers", "investments", "salary_plans", "financial_goals"]:
             _ensure_column_exists(cursor, tbl, "profile_id", "INTEGER NOT NULL DEFAULT 1")
 
         # Run safe migrations for Add-on / Shared Limit Credit Cards & Custom Billing Cycles
@@ -311,6 +381,14 @@ def init_db() -> None:
         _ensure_column_exists(cursor, "cards", "is_addon", "INTEGER DEFAULT 0")
         _ensure_column_exists(cursor, "cards", "sub_limit", "REAL DEFAULT 0.0")
         _ensure_column_exists(cursor, "cards", "billing_start_day", "INTEGER DEFAULT 24")
+
+        # Category classification migration: 'need', 'want', 'debt', 'investment'
+        _ensure_column_exists(cursor, "categories", "classification", "TEXT DEFAULT 'need'")
+
+        # Update category classifications for existing records
+        cursor.execute("UPDATE categories SET classification = 'want' WHERE name IN ('Food & Dining', 'Shopping & Clothing', 'Entertainment & OTT', 'Client Entertainment', 'Miscellaneous & Others')")
+        cursor.execute("UPDATE categories SET classification = 'debt' WHERE name IN ('Loan EMI & Interest', 'Friends & Relatives Debt Pay', 'Money Lent to Friends/Relatives')")
+        cursor.execute("UPDATE categories SET classification = 'investment' WHERE name IN ('Investments & Dividends')")
 
         # Default Settings
         cursor.execute("""
@@ -326,47 +404,49 @@ def init_db() -> None:
 
         # Default Categories Seed for Profile 1 and 2
         default_categories = [
-            # Expense Categories
-            ('Groceries & Supplies', 'expense', 'shopping-cart', '#10b981', 1, 15000.0),
-            ('Food & Dining', 'expense', 'utensils', '#f59e0b', 1, 10000.0),
-            ('Housing & Rent', 'expense', 'home', '#6366f1', 1, 25000.0),
-            ('Utilities (Gas, Water, Power)', 'expense', 'zap', '#06b6d4', 1, 6000.0),
-            ('Transportation & Fuel', 'expense', 'car', '#ec4899', 1, 8000.0),
-            ('Shopping & Clothing', 'expense', 'shopping-bag', '#8b5cf6', 1, 10000.0),
-            ('Health & Medical', 'expense', 'heart-pulse', '#ef4444', 1, 5000.0),
-            ('Entertainment & OTT', 'expense', 'film', '#3b82f6', 1, 4000.0),
-            ('Education & Courses', 'expense', 'book-open', '#14b8a6', 1, 8000.0),
-            ('Loan EMI & Interest', 'expense', 'landmark', '#f97316', 1, 15000.0),
-            ('Friends & Relatives Debt Pay', 'expense', 'users', '#e11d48', 1, 10000.0),
-            ('Money Lent to Friends/Relatives', 'expense', 'users', '#e11d48', 1, 10000.0),
-            ('Personal Care & Grooming', 'expense', 'sparkles', '#a855f7', 1, 3000.0),
-            ('Miscellaneous & Others', 'expense', 'tag', '#64748b', 1, 5000.0),
-            ('Office & Coworking Rent', 'expense', 'building', '#6366f1', 1, 35000.0),
-            ('Cloud & Software Subscriptions', 'expense', 'cloud', '#06b6d4', 1, 20000.0),
-            ('Client Entertainment', 'expense', 'coffee', '#f59e0b', 1, 10000.0),
-            ('Team Stipends & Wages', 'expense', 'briefcase', '#10b981', 1, 60000.0),
-            # Income Categories
-            ('Monthly Salary', 'income', 'briefcase', '#10b981', 1, 0.0),
-            ('Freelance & Consulting', 'income', 'laptop', '#3b82f6', 1, 0.0),
-            ('Client Retainers & Projects', 'income', 'award', '#10b981', 1, 0.0),
-            ('Investments & Dividends', 'income', 'trending-up', '#8b5cf6', 1, 0.0),
-            ('Rental Income', 'income', 'key', '#f59e0b', 1, 0.0),
-            ('Cashbacks & Refunds', 'income', 'gift', '#06b6d4', 1, 0.0),
-            ('Friend/Relative Repayment', 'income', 'user-check', '#14b8a6', 1, 0.0),
-            ('Borrowed from Friends/Relatives', 'income', 'users', '#f59e0b', 1, 0.0),
-            ('Other Income', 'income', 'plus-circle', '#64748b', 1, 0.0)
+            # Expense Categories - Needs
+            ('Groceries & Supplies', 'expense', 'shopping-cart', '#10b981', 1, 15000.0, 'need'),
+            ('Housing & Rent', 'expense', 'home', '#6366f1', 1, 25000.0, 'need'),
+            ('Utilities (Gas, Water, Power)', 'expense', 'zap', '#06b6d4', 1, 6000.0, 'need'),
+            ('Transportation & Fuel', 'expense', 'car', '#ec4899', 1, 8000.0, 'need'),
+            ('Health & Medical', 'expense', 'heart-pulse', '#ef4444', 1, 5000.0, 'need'),
+            ('Education & Courses', 'expense', 'book-open', '#14b8a6', 1, 8000.0, 'need'),
+            ('Personal Care & Grooming', 'expense', 'sparkles', '#a855f7', 1, 3000.0, 'need'),
+            ('Office & Coworking Rent', 'expense', 'building', '#6366f1', 1, 35000.0, 'need'),
+            ('Cloud & Software Subscriptions', 'expense', 'cloud', '#06b6d4', 1, 20000.0, 'need'),
+            ('Team Stipends & Wages', 'expense', 'briefcase', '#10b981', 1, 60000.0, 'need'),
+            # Expense Categories - Wants
+            ('Food & Dining', 'expense', 'utensils', '#f59e0b', 1, 10000.0, 'want'),
+            ('Shopping & Clothing', 'expense', 'shopping-bag', '#8b5cf6', 1, 10000.0, 'want'),
+            ('Entertainment & OTT', 'expense', 'film', '#3b82f6', 1, 4000.0, 'want'),
+            ('Client Entertainment', 'expense', 'coffee', '#f59e0b', 1, 10000.0, 'want'),
+            ('Miscellaneous & Others', 'expense', 'tag', '#64748b', 1, 5000.0, 'want'),
+            # Expense Categories - Debts
+            ('Loan EMI & Interest', 'expense', 'landmark', '#f97316', 1, 15000.0, 'debt'),
+            ('Friends & Relatives Debt Pay', 'expense', 'users', '#e11d48', 1, 10000.0, 'debt'),
+            ('Money Lent to Friends/Relatives', 'expense', 'users', '#e11d48', 1, 10000.0, 'debt'),
+            # Income & Investment Categories
+            ('Monthly Salary', 'income', 'briefcase', '#10b981', 1, 0.0, 'need'),
+            ('Freelance & Consulting', 'income', 'laptop', '#3b82f6', 1, 0.0, 'need'),
+            ('Client Retainers & Projects', 'income', 'award', '#10b981', 1, 0.0, 'need'),
+            ('Investments & Dividends', 'income', 'trending-up', '#8b5cf6', 1, 0.0, 'investment'),
+            ('Rental Income', 'income', 'key', '#f59e0b', 1, 0.0, 'need'),
+            ('Cashbacks & Refunds', 'income', 'gift', '#06b6d4', 1, 0.0, 'need'),
+            ('Friend/Relative Repayment', 'income', 'user-check', '#14b8a6', 1, 0.0, 'debt'),
+            ('Borrowed from Friends/Relatives', 'income', 'users', '#f59e0b', 1, 0.0, 'debt'),
+            ('Other Income', 'income', 'plus-circle', '#64748b', 1, 0.0, 'need')
         ]
 
         # Ensure categories for profile 1
         for c in default_categories:
             cursor.execute("""
-            INSERT OR IGNORE INTO categories (profile_id, name, type, icon, color, is_default, budget_limit)
-            SELECT 1, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (
+            INSERT OR IGNORE INTO categories (profile_id, name, type, icon, color, is_default, budget_limit, classification)
+            SELECT 1, ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (
                 SELECT 1 FROM categories WHERE profile_id = 1 AND name = ? AND type = ?
             );
-            """, (c[0], c[1], c[2], c[3], c[4], c[5], c[0], c[1]))
+            """, (c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[0], c[1]))
 
-        # Create indexes for blazing-fast month-wise, day-wise, and profile-filtered queries
+        # Create indexes for blazing-fast queries
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_carryover_prof_ym ON monthly_carryovers(profile_id, year, month);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_trans_profile ON transactions(profile_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_trans_date ON transactions(date);")
@@ -375,6 +455,9 @@ def init_db() -> None:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_trans_acc ON transactions(account_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_acc_profile ON accounts(profile_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_borrow_profile ON borrows_lent(profile_id, direction, status);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_investments_profile ON investments(profile_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_salary_plans_profile ON salary_plans(profile_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_goals_profile ON financial_goals(profile_id);")
 
 def create_default_user_data(cursor: sqlite3.Cursor, user_id: int, full_name: str) -> int:
     """
@@ -394,36 +477,48 @@ def create_default_user_data(cursor: sqlite3.Cursor, user_id: int, full_name: st
         (?, 'Cash Wallet', 'cash', 'Cash in Hand', 'N/A', 0.00, '#10b981');
     """, (new_profile_id, new_profile_id))
 
-    # Standard starter categories
+    # Standard starter categories with Need/Want/Debt/Investment classification
     default_cats = [
-        ('Groceries & Supplies', 'expense', 'shopping-cart', '#10b981', 1, 15000.0),
-        ('Food & Dining', 'expense', 'utensils', '#f59e0b', 1, 10000.0),
-        ('Housing & Rent', 'expense', 'home', '#6366f1', 1, 25000.0),
-        ('Utilities (Gas, Water, Power)', 'expense', 'zap', '#06b6d4', 1, 6000.0),
-        ('Transportation & Fuel', 'expense', 'car', '#ec4899', 1, 8000.0),
-        ('Shopping & Clothing', 'expense', 'shopping-bag', '#8b5cf6', 1, 10000.0),
-        ('Health & Medical', 'expense', 'heart-pulse', '#ef4444', 1, 5000.0),
-        ('Entertainment & OTT', 'expense', 'film', '#3b82f6', 1, 4000.0),
-        ('Education & Courses', 'expense', 'book-open', '#14b8a6', 1, 8000.0),
-        ('Loan EMI & Interest', 'expense', 'landmark', '#f97316', 1, 15000.0),
-        ('Friends & Relatives Debt Pay', 'expense', 'users', '#e11d48', 1, 10000.0),
-        ('Money Lent to Friends/Relatives', 'expense', 'users', '#e11d48', 1, 10000.0),
-        ('Personal Care & Grooming', 'expense', 'sparkles', '#a855f7', 1, 3000.0),
-        ('Miscellaneous & Others', 'expense', 'tag', '#64748b', 1, 5000.0),
-        ('Monthly Salary', 'income', 'briefcase', '#10b981', 1, 0.0),
-        ('Freelance & Consulting', 'income', 'laptop', '#3b82f6', 1, 0.0),
-        ('Investments & Dividends', 'income', 'trending-up', '#8b5cf6', 1, 0.0),
-        ('Rental Income', 'income', 'key', '#f59e0b', 1, 0.0),
-        ('Cashbacks & Refunds', 'income', 'gift', '#06b6d4', 1, 0.0),
-        ('Friend/Relative Repayment', 'income', 'user-check', '#14b8a6', 1, 0.0),
-        ('Borrowed from Friends/Relatives', 'income', 'users', '#f59e0b', 1, 0.0),
-        ('Other Income', 'income', 'plus-circle', '#64748b', 1, 0.0)
+        ('Groceries & Supplies', 'expense', 'shopping-cart', '#10b981', 1, 15000.0, 'need'),
+        ('Food & Dining', 'expense', 'utensils', '#f59e0b', 1, 10000.0, 'want'),
+        ('Housing & Rent', 'expense', 'home', '#6366f1', 1, 25000.0, 'need'),
+        ('Utilities (Gas, Water, Power)', 'expense', 'zap', '#06b6d4', 1, 6000.0, 'need'),
+        ('Transportation & Fuel', 'expense', 'car', '#ec4899', 1, 8000.0, 'need'),
+        ('Shopping & Clothing', 'expense', 'shopping-bag', '#8b5cf6', 1, 10000.0, 'want'),
+        ('Health & Medical', 'expense', 'heart-pulse', '#ef4444', 1, 5000.0, 'need'),
+        ('Entertainment & OTT', 'expense', 'film', '#3b82f6', 1, 4000.0, 'want'),
+        ('Education & Courses', 'expense', 'book-open', '#14b8a6', 1, 8000.0, 'need'),
+        ('Loan EMI & Interest', 'expense', 'landmark', '#f97316', 1, 15000.0, 'debt'),
+        ('Friends & Relatives Debt Pay', 'expense', 'users', '#e11d48', 1, 10000.0, 'debt'),
+        ('Money Lent to Friends/Relatives', 'expense', 'users', '#e11d48', 1, 10000.0, 'debt'),
+        ('Personal Care & Grooming', 'expense', 'sparkles', '#a855f7', 1, 3000.0, 'need'),
+        ('Miscellaneous & Others', 'expense', 'tag', '#64748b', 1, 5000.0, 'want'),
+        ('Monthly Salary', 'income', 'briefcase', '#10b981', 1, 0.0, 'need'),
+        ('Freelance & Consulting', 'income', 'laptop', '#3b82f6', 1, 0.0, 'need'),
+        ('Investments & Dividends', 'income', 'trending-up', '#8b5cf6', 1, 0.0, 'investment'),
+        ('Rental Income', 'income', 'key', '#f59e0b', 1, 0.0, 'need'),
+        ('Cashbacks & Refunds', 'income', 'gift', '#06b6d4', 1, 0.0, 'need'),
+        ('Friend/Relative Repayment', 'income', 'user-check', '#14b8a6', 1, 0.0, 'debt'),
+        ('Borrowed from Friends/Relatives', 'income', 'users', '#f59e0b', 1, 0.0, 'debt'),
+        ('Other Income', 'income', 'plus-circle', '#64748b', 1, 0.0, 'need')
     ]
     for c in default_cats:
         cursor.execute("""
-        INSERT INTO categories (profile_id, name, type, icon, color, is_default, budget_limit)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (new_profile_id, c[0], c[1], c[2], c[3], c[4], c[5]))
+        INSERT INTO categories (profile_id, name, type, icon, color, is_default, budget_limit, classification)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (new_profile_id, c[0], c[1], c[2], c[3], c[4], c[5], c[6]))
+
+    # Starter Salary Plan (50/30/20 standard guideline)
+    cursor.execute("""
+    INSERT INTO salary_plans (profile_id, monthly_salary, rule_type, needs_percent, wants_percent, savings_percent, debts_percent, emergency_fund_target_months)
+    VALUES (?, 75000.0, '50_30_20', 50.0, 30.0, 10.0, 10.0, 6)
+    """, (new_profile_id,))
+
+    # Starter Essential Goal: 6-Month Emergency Fund
+    cursor.execute("""
+    INSERT INTO financial_goals (profile_id, title, category, target_amount, current_amount, monthly_contribution, priority, status)
+    VALUES (?, 'Emergency Fund (6 Months)', 'emergency_fund', 200000.0, 0.0, 10000.0, 'high', 'in_progress')
+    """, (new_profile_id,))
 
     return new_profile_id
 

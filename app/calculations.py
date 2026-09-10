@@ -463,3 +463,372 @@ def get_day_wise_report(cursor: sqlite3.Cursor, year: int, month: int, profile_i
         },
         "days": days_list
     }
+
+# ====================================================================
+# 4. Investments & Portfolio Analytics
+# ====================================================================
+ASSET_TYPE_META = {
+    "mutual_fund": {"label": "Mutual Funds (SIP/Lumpsum)", "color": "#10b981", "icon": "pie-chart"},
+    "stocks": {"label": "Stocks & Direct Equities", "color": "#3b82f6", "icon": "trending-up"},
+    "fixed_deposit": {"label": "Fixed & Recurring Deposits", "color": "#f59e0b", "icon": "lock"},
+    "gold": {"label": "Gold & Sovereign Gold Bonds", "color": "#eab308", "icon": "award"},
+    "epf_ppf": {"label": "Provident Funds (EPF/PPF/NPS)", "color": "#8b5cf6", "icon": "shield"},
+    "real_estate": {"label": "Real Estate & REITs", "color": "#06b6d4", "icon": "home"},
+    "crypto": {"label": "Digital Assets / Crypto", "color": "#ec4899", "icon": "zap"},
+    "other": {"label": "Other Alternate Assets", "color": "#64748b", "icon": "tag"}
+}
+
+def calculate_investment_summary(cursor: sqlite3.Cursor, profile_id: int) -> Dict[str, Any]:
+    """Calculates overall investment portfolio returns, monthly SIPs, and asset allocation breakdown."""
+    cursor.execute("""
+    SELECT i.*, a.name as linked_account_name
+    FROM investments i
+    LEFT JOIN accounts a ON i.linked_account_id = a.id
+    WHERE i.profile_id = ? AND i.status = 'active'
+    ORDER BY i.current_value DESC, i.id DESC
+    """, (profile_id,))
+    investments = [dict(row) for row in cursor.fetchall()]
+
+    total_invested = sum(i["invested_amount"] for i in investments)
+    current_value = sum(i["current_value"] for i in investments)
+    total_returns = current_value - total_invested
+    returns_pct = (total_returns / total_invested * 100.0) if total_invested > 0 else 0.0
+
+    monthly_sip_total = sum(i["sip_amount"] for i in investments if i.get("sip_enabled") == 1)
+
+    # Asset type distribution
+    type_totals: Dict[str, Dict[str, Any]] = {}
+    for i in investments:
+        atype = i.get("asset_type") or "other"
+        meta = ASSET_TYPE_META.get(atype, ASSET_TYPE_META["other"])
+        if atype not in type_totals:
+            type_totals[atype] = {
+                "asset_type": atype,
+                "label": meta["label"],
+                "color": meta["color"],
+                "icon": meta["icon"],
+                "count": 0,
+                "invested_amount": 0.0,
+                "current_value": 0.0,
+                "percentage": 0.0
+            }
+        type_totals[atype]["count"] += 1
+        type_totals[atype]["invested_amount"] += i["invested_amount"]
+        type_totals[atype]["current_value"] += i["current_value"]
+
+    asset_breakdown = list(type_totals.values())
+    for item in asset_breakdown:
+        item["invested_amount"] = round(item["invested_amount"], 2)
+        item["current_value"] = round(item["current_value"], 2)
+        item["percentage"] = round((item["current_value"] / current_value * 100.0), 1) if current_value > 0 else 0.0
+
+    # Sort breakdown descending by current value
+    asset_breakdown.sort(key=lambda x: x["current_value"], reverse=True)
+
+    return {
+        "profile_id": profile_id,
+        "count": len(investments),
+        "total_invested": round(total_invested, 2),
+        "current_value": round(current_value, 2),
+        "total_returns": round(total_returns, 2),
+        "returns_percentage": round(returns_pct, 2),
+        "monthly_sip_total": round(monthly_sip_total, 2),
+        "asset_breakdown": asset_breakdown,
+        "investments": investments
+    }
+
+# ====================================================================
+# 5. Salary-Based Financial Planning & Live Variance Tracker
+# ====================================================================
+def calculate_salary_plan_analysis(cursor: sqlite3.Cursor, profile_id: int, year: int, month: int) -> Dict[str, Any]:
+    """
+    Computes user's budget allocation plan from salary (Needs, Wants, Debts, Savings/Emergency, Investments)
+    and tracks actual current-month expenditures against the targets with variance and financial wellness score.
+    """
+    # 1. Fetch or initialize salary plan configuration
+    cursor.execute("SELECT * FROM salary_plans WHERE profile_id = ?", (profile_id,))
+    plan_row = cursor.fetchone()
+    if plan_row:
+        plan = dict(plan_row)
+    else:
+        # Check if user had salary income logged this or last month
+        cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0.0) as salary_sum FROM transactions
+        WHERE profile_id = ? AND type = 'income' AND description LIKE '%salary%'
+        """, (profile_id,))
+        detected_salary = float(cursor.fetchone()["salary_sum"])
+        salary_val = detected_salary if detected_salary > 0 else 75000.0
+
+        cursor.execute("""
+        INSERT OR REPLACE INTO salary_plans (profile_id, monthly_salary, rule_type, needs_percent, wants_percent, savings_percent, debts_percent, emergency_fund_target_months)
+        VALUES (?, ?, '50_30_20', 50.0, 30.0, 10.0, 10.0, 6)
+        """, (profile_id, salary_val))
+        plan = {
+            "profile_id": profile_id,
+            "monthly_salary": salary_val,
+            "rule_type": "50_30_20",
+            "needs_percent": 50.0,
+            "wants_percent": 30.0,
+            "savings_percent": 10.0,
+            "debts_percent": 10.0,
+            "emergency_fund_target_months": 6
+        }
+
+    monthly_salary = float(plan["monthly_salary"])
+    needs_pct = float(plan["needs_percent"])
+    wants_pct = float(plan["wants_percent"])
+    savings_pct = float(plan["savings_percent"])
+    debts_pct = float(plan["debts_percent"])
+    efund_months = int(plan.get("emergency_fund_target_months") or 6)
+
+    # Computed Target Budgets (₹)
+    budget_needs = round(monthly_salary * (needs_pct / 100.0), 2)
+    budget_wants = round(monthly_salary * (wants_pct / 100.0), 2)
+    budget_savings = round(monthly_salary * (savings_pct / 100.0), 2)
+    budget_debts = round(monthly_salary * (debts_pct / 100.0), 2)
+
+    # 2. Actual Monthly Spending in Current Month by Classification
+    start_date = f"{year:04d}-{month:02d}-01"
+    num_days = calendar.monthrange(year, month)[1]
+    end_date = f"{year:04d}-{month:02d}-{num_days:02d}"
+
+    # Expenses categorized as 'need'
+    cursor.execute("""
+    SELECT COALESCE(SUM(t.amount), 0.0) as sum_needs
+    FROM transactions t
+    JOIN categories c ON t.category_id = c.id
+    WHERE t.profile_id = ? AND t.type = 'expense'
+      AND t.date BETWEEN ? AND ?
+      AND (c.classification = 'need' OR c.classification IS NULL)
+    """, (profile_id, start_date, end_date))
+    actual_needs = float(cursor.fetchone()["sum_needs"])
+
+    # Expenses categorized as 'want'
+    cursor.execute("""
+    SELECT COALESCE(SUM(t.amount), 0.0) as sum_wants
+    FROM transactions t
+    JOIN categories c ON t.category_id = c.id
+    WHERE t.profile_id = ? AND t.type = 'expense'
+      AND t.date BETWEEN ? AND ?
+      AND c.classification = 'want'
+    """, (profile_id, start_date, end_date))
+    actual_wants = float(cursor.fetchone()["sum_wants"])
+
+    # Debts paid this month (Loan EMI transactions + Borrow repayments paid)
+    cursor.execute("""
+    SELECT COALESCE(SUM(t.amount), 0.0) as sum_debt_trans
+    FROM transactions t
+    LEFT JOIN categories c ON t.category_id = c.id
+    WHERE t.profile_id = ? AND t.type = 'expense'
+      AND t.date BETWEEN ? AND ?
+      AND (t.loan_id IS NOT NULL OR t.borrow_id IS NOT NULL OR c.classification = 'debt')
+    """, (profile_id, start_date, end_date))
+    actual_debts = float(cursor.fetchone()["sum_debt_trans"])
+
+    # Total active monthly loan EMI obligations
+    cursor.execute("""
+    SELECT COALESCE(SUM(emi_amount), 0.0) as total_active_emi
+    FROM loans WHERE profile_id = ? AND status = 'active'
+    """, (profile_id,))
+    total_active_emi = float(cursor.fetchone()["total_active_emi"])
+
+    # Investments and savings committed this month
+    cursor.execute("""
+    SELECT COALESCE(SUM(t.amount), 0.0) as sum_invest_trans
+    FROM transactions t
+    JOIN categories c ON t.category_id = c.id
+    WHERE t.profile_id = ? AND t.type = 'expense'
+      AND t.date BETWEEN ? AND ?
+      AND c.classification = 'investment'
+    """, (profile_id, start_date, end_date))
+    actual_invest_trans = float(cursor.fetchone()["sum_invest_trans"])
+
+    cursor.execute("""
+    SELECT COALESCE(SUM(sip_amount), 0.0) as monthly_sip
+    FROM investments WHERE profile_id = ? AND status = 'active' AND sip_enabled = 1
+    """, (profile_id,))
+    monthly_sip_commitment = float(cursor.fetchone()["monthly_sip"])
+    actual_savings = max(actual_invest_trans, monthly_sip_commitment)
+
+    # 3. Emergency Fund Analysis
+    # Essential monthly baseline = actual needs if > 0 else planned needs
+    essential_monthly_burn = actual_needs if actual_needs > 0 else budget_needs
+    emergency_target_amount = round(essential_monthly_burn * efund_months, 2)
+
+    # Liquid reserves available (bank + cash accounts)
+    cursor.execute("""
+    SELECT COALESCE(SUM(balance), 0.0) as liquid_total
+    FROM accounts WHERE profile_id = ? AND is_active = 1 AND type IN ('bank', 'cash', 'savings', 'wallet')
+    """, (profile_id,))
+    current_liquid_reserves = max(0.0, float(cursor.fetchone()["liquid_total"]))
+
+    runway_months = round(current_liquid_reserves / essential_monthly_burn, 1) if essential_monthly_burn > 0 else 0.0
+    emergency_gap = max(0.0, round(emergency_target_amount - current_liquid_reserves, 2))
+    recommended_emergency_sip = round(min(budget_savings, emergency_gap / 12), 2) if emergency_gap > 0 else 0.0
+
+    # 4. Financial Goals Progress
+    cursor.execute("""
+    SELECT g.*, a.name as linked_account_name, i.name as linked_investment_name
+    FROM financial_goals g
+    LEFT JOIN accounts a ON g.linked_account_id = a.id
+    LEFT JOIN investments i ON g.linked_investment_id = i.id
+    WHERE g.profile_id = ?
+    ORDER BY CASE g.priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, g.id ASC
+    """, (profile_id,))
+    goals = [dict(row) for row in cursor.fetchall()]
+    total_goals_target = sum(g["target_amount"] for g in goals)
+    total_goals_saved = sum(g["current_amount"] for g in goals)
+    goals_progress_pct = round((total_goals_saved / total_goals_target * 100.0), 1) if total_goals_target > 0 else 0.0
+
+    # 5. Buckets Comparison & Variance
+    buckets = [
+        {
+            "key": "needs",
+            "title": "Essential Needs",
+            "icon": "shield-check",
+            "color": "#10b981",
+            "target_percent": needs_pct,
+            "budget": budget_needs,
+            "actual": round(actual_needs, 2),
+            "remaining": round(budget_needs - actual_needs, 2),
+            "percent_used": round((actual_needs / budget_needs * 100.0), 1) if budget_needs > 0 else 0.0,
+            "status": "normal" if actual_needs <= budget_needs else "overspent"
+        },
+        {
+            "key": "wants",
+            "title": "Lifestyle Wants",
+            "icon": "sparkles",
+            "color": "#8b5cf6",
+            "target_percent": wants_pct,
+            "budget": budget_wants,
+            "actual": round(actual_wants, 2),
+            "remaining": round(budget_wants - actual_wants, 2),
+            "percent_used": round((actual_wants / budget_wants * 100.0), 1) if budget_wants > 0 else 0.0,
+            "status": "normal" if actual_wants <= budget_wants else "overspent"
+        },
+        {
+            "key": "debts",
+            "title": "Debt Clear & EMIs",
+            "icon": "landmark",
+            "color": "#f97316",
+            "target_percent": debts_pct,
+            "budget": budget_debts,
+            "actual": round(actual_debts, 2),
+            "active_emi_obligation": round(total_active_emi, 2),
+            "remaining": round(budget_debts - actual_debts, 2),
+            "percent_used": round((actual_debts / budget_debts * 100.0), 1) if budget_debts > 0 else 0.0,
+            "status": "normal"
+        },
+        {
+            "key": "savings",
+            "title": "Investments & Goals",
+            "icon": "trending-up",
+            "color": "#3b82f6",
+            "target_percent": savings_pct,
+            "budget": budget_savings,
+            "actual": round(actual_savings, 2),
+            "monthly_sip": round(monthly_sip_commitment, 2),
+            "remaining": round(budget_savings - actual_savings, 2),
+            "percent_used": round((actual_savings / budget_savings * 100.0), 1) if budget_savings > 0 else 0.0,
+            "status": "achieved" if actual_savings >= budget_savings else "in_progress"
+        }
+    ]
+
+    # 6. Financial Health Score (0 - 100)
+    score = 0
+    # Needs control (30 pts max)
+    if budget_needs > 0:
+        needs_ratio = actual_needs / budget_needs
+        score += int(30 * max(0.0, min(1.0, 1.2 - needs_ratio * 0.4)))
+    else:
+        score += 20
+
+    # Wants discipline (25 pts max)
+    if budget_wants > 0:
+        wants_ratio = actual_wants / budget_wants
+        score += int(25 * max(0.0, min(1.0, 1.1 - wants_ratio * 0.5)))
+    else:
+        score += 20
+
+    # Emergency fund cushion (20 pts max)
+    if runway_months >= 6.0:
+        score += 20
+    elif runway_months >= 3.0:
+        score += int(10 + (runway_months - 3.0) / 3.0 * 10)
+    else:
+        score += int(max(0, runway_months / 3.0 * 10))
+
+    # Investments and Savings progress (15 pts max)
+    if budget_savings > 0:
+        savings_ratio = actual_savings / budget_savings
+        score += int(15 * min(1.0, savings_ratio))
+    else:
+        score += 10
+
+    # Debt ratio control (10 pts max)
+    if total_active_emi <= budget_debts:
+        score += 10
+    else:
+        score += int(max(0, 10 - ((total_active_emi - budget_debts) / (budget_debts or 1)) * 5))
+
+    health_score = max(10, min(100, score))
+    if health_score >= 80:
+        health_grade = "Excellent"
+        health_color = "#10b981"
+    elif health_score >= 65:
+        health_grade = "Good"
+        health_color = "#3b82f6"
+    elif health_score >= 50:
+        health_grade = "Moderate"
+        health_color = "#f59e0b"
+    else:
+        health_grade = "Needs Attention"
+        health_color = "#ef4444"
+
+    # Actionable smart suggestions
+    insights = []
+    if runway_months < 3.0:
+        insights.append(f"⚠️ Emergency fund runway is {runway_months} months. We recommend allocating ₹{recommended_emergency_sip:,.0f}/mo to reach 3-6 months safety runway.")
+    elif runway_months >= 6.0:
+        insights.append(f"✅ Solid safety cushion: You have {runway_months} months of essential runway ready!")
+
+    if actual_wants > budget_wants:
+        insights.append(f"🔴 Lifestyle wants (₹{actual_wants:,.0f}) exceeded target budget (₹{budget_wants:,.0f}) by ₹{actual_wants - budget_wants:,.0f}.")
+    else:
+        insights.append(f"💡 You have ₹{max(0.0, budget_wants - actual_wants):,.0f} remaining in this month's wants allowance.")
+
+    if total_active_emi > budget_debts:
+        insights.append(f"⚠️ Active loan EMIs (₹{total_active_emi:,.0f}) take up more than your planned {debts_pct}% debt allocation.")
+
+    if actual_savings >= budget_savings and budget_savings > 0:
+        insights.append("🎉 Monthly investment target achieved! Your wealth compounding is on track.")
+
+    return {
+        "profile_id": profile_id,
+        "year": year,
+        "month": month,
+        "plan": plan,
+        "monthly_salary": monthly_salary,
+        "health_score": health_score,
+        "health_grade": health_grade,
+        "health_color": health_color,
+        "buckets": buckets,
+        "emergency_fund": {
+            "target_months": efund_months,
+            "monthly_essential_burn": essential_monthly_burn,
+            "target_amount": emergency_target_amount,
+            "current_liquid_reserves": current_liquid_reserves,
+            "runway_months": runway_months,
+            "gap": emergency_gap,
+            "recommended_monthly_contribution": recommended_emergency_sip
+        },
+        "goals": {
+            "count": len(goals),
+            "total_target": round(total_goals_target, 2),
+            "total_saved": round(total_goals_saved, 2),
+            "progress_percent": goals_progress_pct,
+            "items": goals
+        },
+        "insights": insights
+    }
+

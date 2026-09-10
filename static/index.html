@@ -67,6 +67,14 @@
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
           <span>Loans & Debts</span>
         </button>
+        <button class="nav-link" data-tab="investments">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+          <span>Investments & SIPs</span>
+        </button>
+        <button class="nav-link" data-tab="salaryplan">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path><circle cx="12" cy="12" r="10"></circle></svg>
+          <span>Salary & Life Plan</span>
+        </button>
         <button class="nav-link" data-tab="carryover">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
           <span>Carry Forward</span>
@@ -134,6 +142,14 @@
           <button class="nav-link" data-tab="debts">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             <span>Loans & Relatives Debts</span>
+          </button>
+          <button class="nav-link" data-tab="investments">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+            <span>Investments & SIPs</span>
+          </button>
+          <button class="nav-link" data-tab="salaryplan">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path><circle cx="12" cy="12" r="10"></circle></svg>
+            <span>Salary & Goals Planner</span>
           </button>
           <button class="nav-link" data-tab="carryover">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
@@ -312,6 +328,42 @@
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
                 Carry Forward to Next Month
               </button>
+            </div>
+          </div>
+
+          <!-- Wealth & Financial Health Overview Strip -->
+          <div class="wealth-health-bar">
+            <div class="wealth-health-item" id="dashTrueNetWorthBox">
+              <div class="wh-label">
+                <span class="wh-dot green"></span>
+                <span>True Net Worth (Assets - Debts)</span>
+              </div>
+              <div class="wh-val-row">
+                <span class="wh-value" id="dashTrueNetworth">₹0.00</span>
+                <span class="wh-pill text-emerald" id="dashTrueNetworthBadge">Liquid + Portfolio</span>
+              </div>
+            </div>
+
+            <div class="wealth-health-item" id="dashInvestmentsBox" style="cursor: pointer;" title="Click to view Investment Portfolio">
+              <div class="wh-label">
+                <span class="wh-dot blue"></span>
+                <span>Investments & Stocks Portfolio</span>
+              </div>
+              <div class="wh-val-row">
+                <span class="wh-value" id="dashPortfolioValue">₹0.00</span>
+                <span class="wh-pill text-cyan" id="dashPortfolioReturns">+0.0%</span>
+              </div>
+            </div>
+
+            <div class="wealth-health-item" id="dashHealthScoreBox" style="cursor: pointer;" title="Click to view Salary & Goals Plan">
+              <div class="wh-label">
+                <span class="wh-dot amber"></span>
+                <span>Financial Health Score</span>
+              </div>
+              <div class="wh-val-row">
+                <span class="wh-value" id="dashHealthScore">--/100</span>
+                <span class="wh-pill" id="dashHealthGrade">Needs Plan</span>
+              </div>
             </div>
           </div>
 
@@ -1036,6 +1088,254 @@
           </div>
         </section>
 
+        <!-- ============================================== -->
+        <!-- 7. INVESTMENTS & PORTFOLIO VIEW               -->
+        <!-- ============================================== -->
+        <section class="tab-view" id="viewInvestments">
+          <!-- View Header -->
+          <div class="view-header-bar">
+            <div>
+              <h2>Investment Portfolio & SIPs</h2>
+              <span class="view-header-sub">Track Mutual Funds, Equities, Fixed Deposits, Gold/SGB, EPF/PPF & Compounding Returns</span>
+            </div>
+            <div class="view-actions">
+              <button class="btn btn-primary" id="btnOpenAddInvestment">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Add Investment</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hero KPI Cards for Investments -->
+          <div class="kpi-grid mt-3">
+            <div class="kpi-card card-networth">
+              <div class="kpi-header">
+                <span class="kpi-title">Portfolio Current Value</span>
+                <span class="kpi-icon-badge networth">📈</span>
+              </div>
+              <div class="kpi-value text-emerald" id="invTotalCurrentValue">₹0.00</div>
+              <div class="kpi-subtext" id="invTotalReturnsSub">Returns: ₹0.00 (+0.0%)</div>
+            </div>
+
+            <div class="kpi-card card-expense">
+              <div class="kpi-header">
+                <span class="kpi-title">Total Invested Capital</span>
+                <span class="kpi-icon-badge expense">💼</span>
+              </div>
+              <div class="kpi-value" id="invTotalInvested">₹0.00</div>
+              <div class="kpi-subtext">Principal Net Invested</div>
+            </div>
+
+            <div class="kpi-card card-savings">
+              <div class="kpi-header">
+                <span class="kpi-title">Monthly SIP Commitment</span>
+                <span class="kpi-icon-badge savings">🔄</span>
+              </div>
+              <div class="kpi-value text-cyan" id="invMonthlySip">₹0.00</div>
+              <div class="kpi-subtext">Active Recurring Auto-Debits</div>
+            </div>
+
+            <div class="kpi-card card-income">
+              <div class="kpi-header">
+                <span class="kpi-title">Active Assets</span>
+                <span class="kpi-icon-badge income">📊</span>
+              </div>
+              <div class="kpi-value text-indigo" id="invHoldingsCount">0 Assets</div>
+              <div class="kpi-subtext" id="invTopAssetClass">Diversified Across Categories</div>
+            </div>
+          </div>
+
+          <!-- Asset Allocation Charts & Breakdown Split -->
+          <div class="dashboard-charts-grid mt-4">
+            <!-- Donut Chart -->
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <div>
+                  <h3>Asset Class Allocation</h3>
+                  <span class="chart-sub">Weightage & Diversification</span>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="chartInvestmentAllocation"></canvas>
+              </div>
+              <div class="category-legend-list" id="investmentDonutLegend"></div>
+            </div>
+
+            <!-- Asset Breakdown Bars -->
+            <div class="content-card">
+              <div class="card-header-flex">
+                <div>
+                  <h3>Portfolio Breakdown by Asset Class</h3>
+                  <span class="card-sub">Current Value & Return Performance</span>
+                </div>
+              </div>
+              <div class="invest-allocation-list" id="investAllocationList">
+                <div class="empty-state-card text-center p-3 text-muted">No investments recorded yet</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Pills & Holdings Table -->
+          <div class="content-card mt-4">
+            <div class="card-header-flex">
+              <div>
+                <h3>Holdings & Assets Ledger</h3>
+                <span class="card-sub">Mutual Funds, Stocks, FDs, Gold, Retirement Accounts</span>
+              </div>
+            </div>
+
+            <!-- Asset Type Filter Pills -->
+            <div class="invest-filter-pills" id="investFilterPills">
+              <button class="invest-filter-btn active" data-filter="all">All Assets</button>
+              <button class="invest-filter-btn" data-filter="mutual_fund">Mutual Funds (SIP)</button>
+              <button class="invest-filter-btn" data-filter="stocks">Stocks & Equities</button>
+              <button class="invest-filter-btn" data-filter="fixed_deposit">Fixed Deposits</button>
+              <button class="invest-filter-btn" data-filter="gold">Gold & SGB</button>
+              <button class="invest-filter-btn" data-filter="epf_ppf">EPF / PPF / NPS</button>
+              <button class="invest-filter-btn" data-filter="crypto">Crypto / Digital</button>
+              <button class="invest-filter-btn" data-filter="other">Others</button>
+            </div>
+
+            <div class="table-responsive mt-3">
+              <table class="data-table" id="investmentsTable">
+                <thead>
+                  <tr>
+                    <th>Asset Name & Type</th>
+                    <th>Platform / Account</th>
+                    <th class="text-right">Invested (₹)</th>
+                    <th class="text-right">Current Value (₹)</th>
+                    <th class="text-right">Returns (P&L)</th>
+                    <th>SIP Details</th>
+                    <th class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="investmentsTableBody">
+                  <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">Loading investment portfolio...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- 8. SALARY BUDGET & LIFE PLANNER VIEW           -->
+        <!-- ============================================== -->
+        <section class="tab-view" id="viewSalaryPlan">
+          <!-- View Header -->
+          <div class="view-header-bar">
+            <div>
+              <h2>Salary Budget & Life Planner</h2>
+              <span class="view-header-sub">Actionable 50/30/20 budget allocations, Emergency Runway, Debt Relief & Goals Tracking</span>
+            </div>
+            <div class="view-actions">
+              <button class="btn btn-indigo" id="btnOpenConfigureSalaryPlan">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Configure Salary Plan</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Top Row: Financial Health Score & Emergency Fund Cushion -->
+          <div class="salary-plan-top-grid mt-3">
+            <!-- Financial Health Score Card -->
+            <div class="content-card health-score-card">
+              <div class="card-header-flex">
+                <div>
+                  <h3>Financial Health Score</h3>
+                  <span class="card-sub">Calculated from needs burn, lifestyle discipline, debt ratio & runway</span>
+                </div>
+                <div class="health-grade-badge" id="planHealthGradeBadge">Good</div>
+              </div>
+              <div class="health-score-body">
+                <div class="health-score-dial-wrap">
+                  <div class="health-score-dial" id="planHealthScoreDial">
+                    <span class="health-score-num" id="planHealthScoreNum">78</span>
+                    <span class="health-score-denom">/100</span>
+                  </div>
+                </div>
+                <div class="health-insights-list" id="planHealthInsightsList">
+                  <div class="insight-item">Analyzing your cash flow and salary allocations...</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Emergency Fund Cushion Card -->
+            <div class="content-card emergency-fund-card">
+              <div class="card-header-flex">
+                <div>
+                  <h3>Emergency Fund Cushion</h3>
+                  <span class="card-sub">Liquid safety runway for unexpected job loss or medical emergencies</span>
+                </div>
+                <div class="runway-pill" id="planRunwayMonthsPill">-- Months Runway</div>
+              </div>
+
+              <div class="emergency-metrics-row mt-2">
+                <div class="ef-metric">
+                  <span class="ef-label">Current Liquid Reserves</span>
+                  <strong class="ef-val text-emerald" id="planCurrentReserves">₹0.00</strong>
+                </div>
+                <div class="ef-metric">
+                  <span class="ef-label">Target (6-Months Burn)</span>
+                  <strong class="ef-val text-primary" id="planTargetReserves">₹0.00</strong>
+                </div>
+                <div class="ef-metric">
+                  <span class="ef-label">Runway Gap</span>
+                  <strong class="ef-val text-rose" id="planRunwayGap">₹0.00</strong>
+                </div>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="ef-progress-wrap mt-3">
+                <div class="ef-progress-bar">
+                  <div class="ef-progress-fill" id="planRunwayProgressFill" style="width: 0%;"></div>
+                </div>
+                <div class="ef-progress-labels">
+                  <span id="planRunwayProgressPct">0% Funded</span>
+                  <span id="planRecommendedSipText">Recommended Allocation: ₹0/mo</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 50/30/20 Salary Budget Allocations vs Actuals -->
+          <div class="content-card mt-4">
+            <div class="card-header-flex">
+              <div>
+                <h3>Monthly Budget Targets vs Current Month Actuals</h3>
+                <span class="card-sub">In-hand Salary: <strong class="text-emerald" id="planDisplaySalary">₹0.00</strong> • Rule: <strong class="text-indigo" id="planDisplayRule">50/30/20 Rule</strong></span>
+              </div>
+              <div class="period-filter-wrap" style="width: auto;">
+                <input type="month" id="salaryPlanMonthPicker" class="form-control" style="width: 170px;">
+              </div>
+            </div>
+
+            <!-- 4 Interactive Bucket Cards Grid -->
+            <div class="salary-buckets-grid mt-3" id="salaryBucketsGrid">
+              <!-- Rendered dynamically by loadSalaryPlan() -->
+            </div>
+          </div>
+
+          <!-- Financial Goals & Future Wealth Tracker -->
+          <div class="content-card mt-4">
+            <div class="card-header-flex">
+              <div>
+                <h3>Future Financial Goals & Milestones</h3>
+                <span class="card-sub">Save systematically for Emergency Fund, Vehicle, Home, Vacation & Retirement</span>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btnOpenAddGoal">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Add Goal</span>
+              </button>
+            </div>
+
+            <div class="goals-grid mt-3" id="financialGoalsGrid">
+              <div class="empty-state-card text-center p-3 text-muted">No financial goals defined yet. Click "+ Add Goal" to set a milestone!</div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -1739,6 +2039,15 @@
           <input type="number" step="0.01" id="catBudget" class="form-control" placeholder="0.00">
         </div>
         <div class="form-group">
+          <label for="catClassification">Salary Plan Classification (50/30/20)</label>
+          <select id="catClassification" class="form-control">
+            <option value="need">Essential Need (Rent, Grocery, Bills, Medicine)</option>
+            <option value="want">Lifestyle Want (Dining, Shopping, Entertainment)</option>
+            <option value="debt">Debt / Loan Repayment</option>
+            <option value="investment">Savings & Investments (SIP, Stocks, Gold)</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label for="catColor">Color</label>
           <input type="color" id="catColor" class="form-control form-color" value="#6366f1">
         </div>
@@ -1849,6 +2158,260 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-close="modalProfileForm" id="cancelProfileBtn">Cancel</button>
           <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 12. ADD / EDIT INVESTMENT MODAL -->
+  <div class="modal-backdrop" id="modalInvestment">
+    <div class="modal-dialog modal-md">
+      <div class="modal-header">
+        <h3 id="modalInvestmentTitle">Add Investment Asset</h3>
+        <button class="modal-close-btn" data-close="modalInvestment">&times;</button>
+      </div>
+      <form id="formInvestment" class="modal-body">
+        <input type="hidden" id="invEditId" value="">
+
+        <div class="form-group">
+          <label for="invName">Asset / Fund Name *</label>
+          <input type="text" id="invName" class="form-control" placeholder="e.g. Parag Parikh Flexi Cap, Reliance Ind, SBI FD, Gold SGB" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="invAssetType">Asset Type *</label>
+            <select id="invAssetType" class="form-control" required>
+              <option value="mutual_fund">Mutual Funds (SIP / Lumpsum)</option>
+              <option value="stocks">Stocks & Equities</option>
+              <option value="fixed_deposit">Fixed & Recurring Deposits</option>
+              <option value="gold">Gold & Sovereign Gold Bonds (SGB)</option>
+              <option value="epf_ppf">Provident Funds (EPF / PPF / NPS)</option>
+              <option value="real_estate">Real Estate & REITs</option>
+              <option value="crypto">Crypto / Digital Assets</option>
+              <option value="other">Other Alternative Assets</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="invPlatform">Platform / Broker / Bank</label>
+            <input type="text" id="invPlatform" class="form-control" placeholder="e.g. Zerodha, Groww, INDmoney, SBI" value="Groww">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="invFolio">Folio / Demat / Account Number</label>
+          <input type="text" id="invFolio" class="form-control" placeholder="e.g. 142857/99 or Demat ID (Optional)">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="invInvestedAmount">Invested Principal (₹) *</label>
+            <input type="number" step="0.01" id="invInvestedAmount" class="form-control" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label for="invCurrentValue">Current Valuation (₹) *</label>
+            <input type="number" step="0.01" id="invCurrentValue" class="form-control" placeholder="0.00" required>
+          </div>
+        </div>
+
+        <!-- SIP Options -->
+        <div class="card p-3 mb-3" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <label style="margin: 0; font-weight: 600; cursor: pointer;" for="invSipEnabled">Recurring SIP / Monthly Auto-Debit?</label>
+            <input type="checkbox" id="invSipEnabled" style="width: 18px; height: 18px; accent-color: var(--indigo); cursor: pointer;">
+          </div>
+          <div id="invSipFields" style="display: none; margin-top: 10px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="invSipAmount">Monthly SIP Amount (₹)</label>
+                <input type="number" step="0.01" id="invSipAmount" class="form-control" placeholder="5000.00">
+              </div>
+              <div class="form-group">
+                <label for="invSipDay">Debit Day of Month</label>
+                <input type="number" min="1" max="31" id="invSipDay" class="form-control" value="5">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="invLinkedAccount">Linked Funding Bank Account</label>
+            <select id="invLinkedAccount" class="form-control">
+              <option value="">-- Select Bank (Optional) --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="invStartDate">Investment Date</label>
+            <input type="date" id="invStartDate" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="invNotes">Notes / Goal Tag</label>
+          <input type="text" id="invNotes" class="form-control" placeholder="e.g. Retirement corpus, Kid higher education">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalInvestment">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveInvestmentBtn">Save Investment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 13. CONFIGURE SALARY PLAN MODAL -->
+  <div class="modal-backdrop" id="modalSalaryPlan">
+    <div class="modal-dialog modal-md">
+      <div class="modal-header">
+        <h3>Configure Monthly Salary & Budget Plan</h3>
+        <button class="modal-close-btn" data-close="modalSalaryPlan">&times;</button>
+      </div>
+      <form id="formSalaryPlan" class="modal-body">
+        <div class="form-group">
+          <label for="planMonthlySalary">Monthly In-Hand / Take-Home Salary (₹) *</label>
+          <input type="number" step="0.01" id="planMonthlySalary" class="form-control text-lg" placeholder="e.g. 75000" required>
+          <small class="form-hint">Net in-hand amount credited to your bank account every month.</small>
+        </div>
+
+        <div class="form-group">
+          <label>Select Allocation Strategy Preset</label>
+          <div class="rule-presets-flex mt-1">
+            <button type="button" class="btn-preset active" data-rule="50_30_20">50/30/20 Standard</button>
+            <button type="button" class="btn-preset" data-rule="60_20_20">60/20/20 High-Needs</button>
+            <button type="button" class="btn-preset" data-rule="debt_focus">Debt Clear Focus</button>
+            <button type="button" class="btn-preset" data-rule="custom">Custom Custom</button>
+          </div>
+        </div>
+
+        <!-- Sliders & Percent inputs -->
+        <div class="salary-sliders-box p-3 mb-3" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;">
+          <div class="slider-row mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span>🟢 Essential Needs (Rent, Grocery, Bills)</span>
+              <strong id="labelNeedsPct">50% (₹0)</strong>
+            </div>
+            <input type="range" id="sliderNeeds" min="10" max="80" step="5" value="50" class="form-range w-100">
+          </div>
+
+          <div class="slider-row mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span>🟣 Lifestyle Wants (Dining, Shopping, Fun)</span>
+              <strong id="labelWantsPct">30% (₹0)</strong>
+            </div>
+            <input type="range" id="sliderWants" min="0" max="60" step="5" value="30" class="form-range w-100">
+          </div>
+
+          <div class="slider-row mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span>🟠 Debt Clearance & Loan EMIs</span>
+              <strong id="labelDebtsPct">10% (₹0)</strong>
+            </div>
+            <input type="range" id="sliderDebts" min="0" max="50" step="5" value="10" class="form-range w-100">
+          </div>
+
+          <div class="slider-row">
+            <div class="d-flex justify-content-between mb-1">
+              <span>🔵 Future Savings & Investments</span>
+              <strong id="labelSavingsPct">10% (₹0)</strong>
+            </div>
+            <input type="range" id="sliderSavings" min="0" max="60" step="5" value="10" class="form-range w-100">
+          </div>
+
+          <div class="total-allocation-bar mt-3 pt-2" style="border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: var(--text-muted);">Total Budget Allocation:</span>
+            <strong id="labelTotalAllocation" class="text-emerald">100%</strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="planEmergencyTargetMonths">Emergency Fund Target Runway</label>
+          <select id="planEmergencyTargetMonths" class="form-control">
+            <option value="3">3 Months Essential Burn (Minimum Safety)</option>
+            <option value="6" selected>6 Months Essential Burn (Recommended)</option>
+            <option value="9">9 Months Essential Burn (Cautious & Self-Employed)</option>
+            <option value="12">12 Months Essential Burn (Maximum Fortress)</option>
+          </select>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalSalaryPlan">Cancel</button>
+          <button type="submit" class="btn btn-indigo" id="saveSalaryPlanBtn">Apply Plan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 14. ADD / EDIT FINANCIAL GOAL MODAL -->
+  <div class="modal-backdrop" id="modalFinancialGoal">
+    <div class="modal-dialog modal-md">
+      <div class="modal-header">
+        <h3 id="modalGoalTitle">Add Financial Goal</h3>
+        <button class="modal-close-btn" data-close="modalFinancialGoal">&times;</button>
+      </div>
+      <form id="formFinancialGoal" class="modal-body">
+        <input type="hidden" id="goalEditId" value="">
+
+        <div class="form-group">
+          <label for="goalTitle">Goal Title *</label>
+          <input type="text" id="goalTitle" class="form-control" placeholder="e.g. 6-Month Emergency Fund, Buy Electric Car, House Down Payment" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="goalCategory">Goal Category *</label>
+            <select id="goalCategory" class="form-control" required>
+              <option value="emergency_fund">🛡️ Emergency Reserve</option>
+              <option value="vehicle">🚗 Vehicle / Car / Bike</option>
+              <option value="home">🏡 House / Property Down Payment</option>
+              <option value="retirement">🏖️ Retirement Wealth</option>
+              <option value="education">🎓 Higher Education</option>
+              <option value="vacation">✈️ Dream Vacation / Travel</option>
+              <option value="wealth">💰 General Wealth & Compounding</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="goalPriority">Priority</label>
+            <select id="goalPriority" class="form-control">
+              <option value="high">High Priority</option>
+              <option value="medium" selected>Medium Priority</option>
+              <option value="low">Low Priority</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="goalTargetAmount">Target Amount (₹) *</label>
+            <input type="number" step="0.01" id="goalTargetAmount" class="form-control" placeholder="e.g. 300000" required>
+          </div>
+          <div class="form-group">
+            <label for="goalCurrentAmount">Already Saved Amount (₹)</label>
+            <input type="number" step="0.01" id="goalCurrentAmount" class="form-control" placeholder="0.00" value="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="goalTargetDate">Target Completion Date</label>
+            <input type="month" id="goalTargetDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="goalMonthlyContribution">Planned Monthly Savings (₹)</label>
+            <input type="number" step="0.01" id="goalMonthlyContribution" class="form-control" placeholder="e.g. 10000">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="goalLinkedInvestment">Link with Portfolio Investment (Optional)</label>
+          <select id="goalLinkedInvestment" class="form-control">
+            <option value="">-- None (Track Separately) --</option>
+          </select>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="modalFinancialGoal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveGoalBtn">Save Goal</button>
         </div>
       </form>
     </div>

@@ -29,7 +29,15 @@
     recentTransactions: [],
     filteredTransactions: [],
     debtDirectionTab: 'borrowed',
-    reportSubTab: 'month'
+    reportSubTab: 'month',
+    investments: [],
+    investmentsSummary: null,
+    salaryPlan: null,
+    salaryPlanAnalysis: null,
+    financialGoals: [],
+    selectedAssetFilter: 'all',
+    editingInvestmentId: null,
+    editingGoalId: null
   };
 
   // ====================================================================
@@ -212,6 +220,14 @@
     state.categories = [];
     state.recentTransactions = [];
     state.filteredTransactions = [];
+    state.investments = [];
+    state.investmentsSummary = null;
+    state.salaryPlan = null;
+    state.salaryPlanAnalysis = null;
+    state.financialGoals = [];
+    state.selectedAssetFilter = 'all';
+    state.editingInvestmentId = null;
+    state.editingGoalId = null;
     state.currentTab = 'dashboard';
 
     // 2. Reset User Display & Badges
@@ -271,6 +287,16 @@
     const sbAmount = document.getElementById('sidebarCarryoverAmount');
     if (sbAmount) sbAmount.textContent = '₹ 0.00';
 
+    // Wealth & Health Widget Reset
+    const dTrueNet = document.getElementById('dashTrueNetworth');
+    if (dTrueNet) dTrueNet.textContent = '₹ 0.00';
+    const dPortVal = document.getElementById('dashPortfolioValue');
+    if (dPortVal) dPortVal.textContent = '₹ 0.00';
+    const dPortRet = document.getElementById('dashPortfolioReturns');
+    if (dPortRet) { dPortRet.textContent = '+0.0%'; dPortRet.className = 'wh-pill'; }
+    const dHealth = document.getElementById('dashHealthScore');
+    if (dHealth) dHealth.textContent = '--/100';
+
     // 5. Reset Lists & Tables
     const dashAccounts = document.getElementById('dashboardAccountsList');
     if (dashAccounts) dashAccounts.innerHTML = '<div class="empty-state-card text-center p-3 text-muted">No accounts available</div>';
@@ -288,6 +314,10 @@
     if (borrowedList) borrowedList.innerHTML = '<div class="empty-state">No borrowed records</div>';
     const lentList = document.getElementById('lentList');
     if (lentList) lentList.innerHTML = '<div class="empty-state">No lent records</div>';
+    const invTbody = document.getElementById('investmentsTableBody');
+    if (invTbody) invTbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No investment records</td></tr>';
+    const goalsGrid = document.getElementById('financialGoalsGrid');
+    if (goalsGrid) goalsGrid.innerHTML = '<div class="empty-state-card text-center p-3 text-muted">No financial goals defined</div>';
 
     // 6. Clear Chart.js canvases & internal chart cache
     if (window.PaisaCharts && typeof window.PaisaCharts.clearAll === 'function') {
@@ -452,7 +482,11 @@
       view.classList.remove('active');
     });
 
-    const targetView = document.getElementById(`view${capitalize(tabId)}`);
+    const viewMap = {
+      investments: 'viewInvestments',
+      salaryplan: 'viewSalaryPlan'
+    };
+    const targetView = document.getElementById(viewMap[tabId] || `view${capitalize(tabId)}`);
     if (targetView) targetView.classList.add('active');
 
     // Update Top Header Title
@@ -461,6 +495,8 @@
       transactions: 'Transactions Ledger',
       accounts: 'Bank Accounts & Cards',
       debts: 'Loans & Relatives Debts',
+      investments: 'Investment Portfolio & SIPs',
+      salaryplan: 'Salary Budget & Life Planner',
       carryover: 'Month-End Carry Forward',
       reports: 'Reports & Analytics',
       settings: 'Settings'
@@ -473,12 +509,14 @@
     else if (tabId === 'transactions') loadTransactions();
     else if (tabId === 'accounts') loadAccounts();
     else if (tabId === 'debts') loadDebts();
+    else if (tabId === 'investments') loadInvestments();
+    else if (tabId === 'salaryplan') loadSalaryPlan();
     else if (tabId === 'carryover') loadCarryover();
     else if (tabId === 'reports') loadReports();
     else if (tabId === 'settings') loadSettings();
 
     // Redraw charts if navigating to views with canvases
-    if (tabId === 'dashboard' || tabId === 'reports') {
+    if (tabId === 'dashboard' || tabId === 'reports' || tabId === 'investments') {
       setTimeout(() => window.PaisaCharts?.redrawAll(), 100);
     }
 
@@ -974,6 +1012,32 @@
         sbStatus.textContent = data.carryover.status === 'carried_forward' ? 'Rolled Over' : 'Active Month';
         sbStatus.style.background = data.carryover.status === 'carried_forward' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(16, 185, 129, 0.2)';
         sbStatus.style.color = data.carryover.status === 'carried_forward' ? '#a5b4fc' : '#34d399';
+      }
+
+      // Wealth & Financial Health Overview Strip
+      const dTrueNet = document.getElementById('dashTrueNetworth');
+      if (dTrueNet) dTrueNet.textContent = formatCurrency(data.true_net_worth != null ? data.true_net_worth : data.total_networth);
+
+      const dPortVal = document.getElementById('dashPortfolioValue');
+      if (dPortVal) dPortVal.textContent = formatCurrency(data.portfolio_value || 0);
+
+      const dPortRet = document.getElementById('dashPortfolioReturns');
+      if (dPortRet && data.investments_summary) {
+        const retPct = data.investments_summary.returns_percentage || 0;
+        const sign = retPct >= 0 ? '+' : '';
+        dPortRet.textContent = `${sign}${retPct}%`;
+        dPortRet.className = `wh-pill ${retPct >= 0 ? 'text-emerald' : 'text-rose'}`;
+      }
+
+      const dHealth = document.getElementById('dashHealthScore');
+      if (dHealth && data.salary_plan_analysis) {
+        dHealth.textContent = `${data.salary_plan_analysis.health_score}/100`;
+        const hBadge = document.getElementById('dashHealthGrade');
+        if (hBadge) {
+          hBadge.textContent = data.salary_plan_analysis.health_grade;
+          hBadge.style.color = data.salary_plan_analysis.health_color;
+          hBadge.style.borderColor = data.salary_plan_analysis.health_color;
+        }
       }
 
       // Store local lists
@@ -1731,6 +1795,668 @@
   }
 
   // ====================================================================
+  // 8. INVESTMENTS & PORTFOLIO ENGINE
+  // ====================================================================
+  async function loadInvestments() {
+    try {
+      const summary = await api('/api/investments/summary');
+      const listData = await api('/api/investments');
+      state.investments = listData.investments || [];
+      state.investmentsSummary = summary;
+
+      // Update KPIs
+      const curValEl = document.getElementById('invTotalCurrentValue');
+      if (curValEl) curValEl.textContent = formatCurrency(summary.current_value);
+
+      const retSubEl = document.getElementById('invTotalReturnsSub');
+      if (retSubEl) {
+        const sign = summary.total_returns >= 0 ? '+' : '';
+        const pctSign = summary.returns_percentage >= 0 ? '+' : '';
+        retSubEl.textContent = `Returns: ${sign}${formatCurrency(summary.total_returns)} (${pctSign}${summary.returns_percentage}%)`;
+        retSubEl.className = `kpi-subtext ${summary.total_returns >= 0 ? 'text-emerald' : 'text-rose'}`;
+      }
+
+      const invEl = document.getElementById('invTotalInvested');
+      if (invEl) invEl.textContent = formatCurrency(summary.total_invested);
+
+      const sipEl = document.getElementById('invMonthlySip');
+      if (sipEl) sipEl.textContent = formatCurrency(summary.monthly_sip_total) + '/mo';
+
+      const countEl = document.getElementById('invHoldingsCount');
+      if (countEl) countEl.textContent = `${summary.count} Holding${summary.count === 1 ? '' : 's'}`;
+
+      const topAssetEl = document.getElementById('invTopAssetClass');
+      if (topAssetEl) {
+        if (summary.asset_breakdown && summary.asset_breakdown.length > 0) {
+          topAssetEl.textContent = `Top: ${summary.asset_breakdown[0].label} (${summary.asset_breakdown[0].percentage}%)`;
+        } else {
+          topAssetEl.textContent = 'Diversified Across Categories';
+        }
+      }
+
+      // Render Asset Allocation Donut Chart
+      if (window.PaisaCharts) {
+        window.PaisaCharts.renderInvestmentAllocationChart('chartInvestmentAllocation', summary.asset_breakdown, formatCurrency);
+      }
+
+      // Render Asset Allocation Progress List
+      renderInvestmentAllocationBars(summary.asset_breakdown);
+
+      // Render Holdings Table
+      renderInvestmentsTable();
+
+      // Populate goal dropdown with latest investments
+      const goalInvLinked = document.getElementById('goalLinkedInvestment');
+      if (goalInvLinked) {
+        goalInvLinked.innerHTML = '<option value="">-- None (Track Separately) --</option>' +
+          state.investments.map(i => `<option value="${i.id}">📈 ${escapeHtml(i.name)} (${formatCurrency(i.current_value)})</option>`).join('');
+      }
+    } catch (e) {
+      console.error('Failed to load investments:', e);
+    }
+  }
+
+  function renderInvestmentAllocationBars(breakdown) {
+    const container = document.getElementById('investAllocationList');
+    if (!container) return;
+    if (!breakdown || breakdown.length === 0) {
+      container.innerHTML = '<div class="empty-state-card text-center p-3 text-muted">No investments recorded yet</div>';
+      return;
+    }
+
+    container.innerHTML = breakdown.map(item => `
+      <div class="invest-alloc-row">
+        <div class="invest-alloc-meta">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="legend-color-dot" style="background-color: ${item.color}"></span>
+            <strong>${escapeHtml(item.label)}</strong>
+            <span style="font-size: 11px; color: var(--text-muted);">(${item.count} asset${item.count === 1 ? '' : 's'})</span>
+          </div>
+          <div>
+            <strong class="text-white">${formatCurrency(item.current_value)}</strong>
+            <span class="wh-pill" style="margin-left: 6px;">${item.percentage}%</span>
+          </div>
+        </div>
+        <div class="invest-alloc-bar">
+          <div class="invest-alloc-fill" style="width: ${Math.min(100, item.percentage)}%; background-color: ${item.color};"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderInvestmentsTable() {
+    const tbody = document.getElementById('investmentsTableBody');
+    if (!tbody) return;
+
+    let items = state.investments || [];
+    if (state.selectedAssetFilter && state.selectedAssetFilter !== 'all') {
+      items = items.filter(i => (i.asset_type || 'other') === state.selectedAssetFilter);
+    }
+
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No investment assets match this filter</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = items.map(inv => {
+      const pnl = (inv.current_value || 0) - (inv.invested_amount || 0);
+      const pnlPct = (inv.invested_amount > 0) ? ((pnl / inv.invested_amount) * 100).toFixed(1) : 0;
+      const isPos = pnl >= 0;
+      const sign = isPos ? '+' : '';
+      const typeLabel = inv.asset_type ? inv.asset_type.replace(/_/g, ' ').toUpperCase() : 'OTHER';
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #fff; font-size: 13.5px;">${escapeHtml(inv.name)}</div>
+            <span class="wh-pill" style="font-size: 10px; margin-top: 3px; display: inline-block;">${typeLabel}</span>
+          </td>
+          <td>
+            <div style="color: var(--text-primary); font-size: 13px;">${escapeHtml(inv.platform || 'Direct')}</div>
+            <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(inv.folio_or_account_number || '')}</div>
+          </td>
+          <td class="text-right" style="font-weight: 600;">
+            ${formatCurrency(inv.invested_amount)}
+          </td>
+          <td class="text-right" style="font-weight: 700; color: #fff;">
+            ${formatCurrency(inv.current_value)}
+          </td>
+          <td class="text-right">
+            <div style="font-weight: 700;" class="${isPos ? 'text-emerald' : 'text-rose'}">
+              ${sign}${formatCurrency(pnl)}
+            </div>
+            <div style="font-size: 11px;" class="${isPos ? 'text-emerald' : 'text-rose'}">
+              ${sign}${pnlPct}%
+            </div>
+          </td>
+          <td>
+            ${inv.sip_enabled ? `
+              <span class="wh-pill text-cyan" style="background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.3);">
+                🔄 ₹${Number(inv.sip_amount || 0).toLocaleString('en-IN')}/mo (Day ${inv.sip_day || 5})
+              </span>
+            ` : '<span class="text-muted" style="font-size: 11px;">Lumpsum</span>'}
+          </td>
+          <td class="text-center">
+            <div style="display: inline-flex; gap: 6px;">
+              <button class="btn btn-secondary btn-sm edit-inv-btn" data-id="${inv.id}" title="Edit Investment">✏️</button>
+              <button class="btn btn-danger btn-sm delete-inv-btn" data-id="${inv.id}" title="Delete Investment">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.edit-inv-btn').forEach(btn => {
+      btn.onclick = () => openModalInvestment(parseInt(btn.getAttribute('data-id')));
+    });
+
+    tbody.querySelectorAll('.delete-inv-btn').forEach(btn => {
+      btn.onclick = () => deleteInvestment(parseInt(btn.getAttribute('data-id')));
+    });
+  }
+
+  function openModalInvestment(invId = null) {
+    state.editingInvestmentId = invId;
+    const modal = document.getElementById('modalInvestment');
+    const form = document.getElementById('formInvestment');
+    if (!modal || !form) return;
+
+    form.reset();
+    document.getElementById('invEditId').value = invId || '';
+    document.getElementById('modalInvestmentTitle').textContent = invId ? 'Edit Investment Asset' : 'Add Investment Asset';
+
+    populateAccountDropdowns();
+
+    const sipCheck = document.getElementById('invSipEnabled');
+    const sipFields = document.getElementById('invSipFields');
+
+    if (invId) {
+      const inv = (state.investments || []).find(i => i.id === invId);
+      if (inv) {
+        document.getElementById('invName').value = inv.name || '';
+        document.getElementById('invAssetType').value = inv.asset_type || 'mutual_fund';
+        document.getElementById('invPlatform').value = inv.platform || '';
+        document.getElementById('invFolio').value = inv.folio_or_account_number || '';
+        document.getElementById('invInvestedAmount').value = inv.invested_amount || 0;
+        document.getElementById('invCurrentValue').value = inv.current_value || 0;
+        if (sipCheck) {
+          sipCheck.checked = inv.sip_enabled === 1;
+          if (sipFields) sipFields.style.display = sipCheck.checked ? 'block' : 'none';
+        }
+        document.getElementById('invSipAmount').value = inv.sip_amount || '';
+        document.getElementById('invSipDay').value = inv.sip_day || 5;
+        document.getElementById('invLinkedAccount').value = inv.linked_account_id || '';
+        document.getElementById('invStartDate').value = inv.start_date || '';
+        document.getElementById('invNotes').value = inv.notes || '';
+      }
+    } else {
+      if (sipCheck) sipCheck.checked = false;
+      if (sipFields) sipFields.style.display = 'none';
+      document.getElementById('invStartDate').value = new Date().toISOString().split('T')[0];
+    }
+
+    openModal('modalInvestment');
+  }
+
+  async function handleSaveInvestment(e) {
+    e.preventDefault();
+    const invId = state.editingInvestmentId;
+    const sipEnabled = document.getElementById('invSipEnabled')?.checked ? 1 : 0;
+    const payload = {
+      name: document.getElementById('invName').value.trim(),
+      asset_type: document.getElementById('invAssetType').value,
+      platform: document.getElementById('invPlatform').value.trim() || 'Zerodha',
+      folio_or_account_number: document.getElementById('invFolio').value.trim(),
+      invested_amount: parseFloat(document.getElementById('invInvestedAmount').value) || 0,
+      current_value: parseFloat(document.getElementById('invCurrentValue').value) || 0,
+      sip_enabled: sipEnabled,
+      sip_amount: sipEnabled ? (parseFloat(document.getElementById('invSipAmount').value) || 0) : 0,
+      sip_day: sipEnabled ? (parseInt(document.getElementById('invSipDay').value) || 5) : 5,
+      linked_account_id: document.getElementById('invLinkedAccount').value ? parseInt(document.getElementById('invLinkedAccount').value) : null,
+      start_date: document.getElementById('invStartDate').value || new Date().toISOString().split('T')[0],
+      notes: document.getElementById('invNotes').value.trim()
+    };
+
+    try {
+      if (invId) {
+        await api(`/api/investments/${invId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        showToast('Investment updated successfully', 'success');
+      } else {
+        await api('/api/investments', { method: 'POST', body: JSON.stringify(payload) });
+        showToast('Investment added to portfolio', 'success');
+      }
+      closeModal('modalInvestment');
+      await loadInvestments();
+      if (state.currentTab === 'dashboard') loadDashboard();
+    } catch (err) {
+      showToast(err.message || 'Failed to save investment', 'error');
+    }
+  }
+
+  async function deleteInvestment(invId) {
+    if (!confirm('Are you sure you want to remove this investment from your portfolio?')) return;
+    try {
+      await api(`/api/investments/${invId}`, { method: 'DELETE' });
+      showToast('Investment deleted', 'success');
+      await loadInvestments();
+      if (state.currentTab === 'dashboard') loadDashboard();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete investment', 'error');
+    }
+  }
+
+  // ====================================================================
+  // 9. SALARY BUDGET & LIFE PLANNER ENGINE
+  // ====================================================================
+  async function loadSalaryPlan() {
+    try {
+      const picker = document.getElementById('salaryPlanMonthPicker');
+      let y = state.selectedYear;
+      let m = state.selectedMonth;
+      if (picker && picker.value) {
+        const parts = picker.value.split('-');
+        y = parseInt(parts[0]);
+        m = parseInt(parts[1]);
+      } else if (picker) {
+        picker.value = `${y}-${m < 10 ? '0' + m : m}`;
+      }
+
+      const analysis = await api(`/api/salary-plan/analysis?year=${y}&month=${m}`);
+      state.salaryPlanAnalysis = analysis;
+      state.salaryPlan = analysis.plan;
+
+      // Update Salary & Rule header labels
+      const salDisplay = document.getElementById('planDisplaySalary');
+      if (salDisplay) salDisplay.textContent = formatCurrency(analysis.monthly_salary);
+
+      const ruleDisplay = document.getElementById('planDisplayRule');
+      if (ruleDisplay) {
+        const ruleNames = {
+          '50_30_20': '50/30/20 Standard Rule',
+          '60_20_20': '60/20/20 High-Needs Rule',
+          'debt_focus': 'Debt Clear Focus Plan',
+          'custom': 'Custom Allocation'
+        };
+        ruleDisplay.textContent = ruleNames[analysis.plan?.rule_type] || '50/30/20 Rule';
+      }
+
+      // Update Health Score Dial & Grade
+      const scoreNum = document.getElementById('planHealthScoreNum');
+      if (scoreNum) scoreNum.textContent = analysis.health_score;
+
+      const scoreDial = document.getElementById('planHealthScoreDial');
+      if (scoreDial) {
+        const angle = Math.round((analysis.health_score / 100) * 360);
+        scoreDial.style.setProperty('--score-angle', `${angle}deg`);
+        scoreDial.style.background = `conic-gradient(${analysis.health_color} ${angle}deg, rgba(255,255,255,0.08) 0deg)`;
+      }
+
+      const gradeBadge = document.getElementById('planHealthGradeBadge');
+      if (gradeBadge) {
+        gradeBadge.textContent = analysis.health_grade;
+        gradeBadge.style.color = analysis.health_color;
+        gradeBadge.style.background = `${analysis.health_color}22`;
+        gradeBadge.style.border = `1px solid ${analysis.health_color}55`;
+      }
+
+      // Render Actionable Smart Insights
+      const insightsList = document.getElementById('planHealthInsightsList');
+      if (insightsList) {
+        if (analysis.insights && analysis.insights.length > 0) {
+          insightsList.innerHTML = analysis.insights.map(ins => `<div class="insight-item">${ins}</div>`).join('');
+        } else {
+          insightsList.innerHTML = '<div class="insight-item">✅ All allocations are well-balanced. Keep up the disciplined budgeting!</div>';
+        }
+      }
+
+      // Update Emergency Fund Cushion
+      const ef = analysis.emergency_fund;
+      if (ef) {
+        const runwayPill = document.getElementById('planRunwayMonthsPill');
+        if (runwayPill) {
+          runwayPill.textContent = `${ef.runway_months} Months Runway`;
+          const isSafe = ef.runway_months >= 3.0;
+          runwayPill.style.color = isSafe ? '#10b981' : '#f43f5e';
+          runwayPill.style.borderColor = isSafe ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)';
+          runwayPill.style.background = isSafe ? 'rgba(16,185,129,0.15)' : 'rgba(244,63,94,0.15)';
+        }
+
+        const curRes = document.getElementById('planCurrentReserves');
+        if (curRes) curRes.textContent = formatCurrency(ef.current_liquid_reserves);
+
+        const tgtRes = document.getElementById('planTargetReserves');
+        if (tgtRes) tgtRes.textContent = formatCurrency(ef.target_amount);
+
+        const gapRes = document.getElementById('planRunwayGap');
+        if (gapRes) {
+          gapRes.textContent = ef.gap > 0 ? formatCurrency(ef.gap) : 'Funded 🎉';
+          gapRes.className = `ef-val ${ef.gap > 0 ? 'text-rose' : 'text-emerald'}`;
+        }
+
+        const pct = ef.target_amount > 0 ? Math.min(100, Math.round((ef.current_liquid_reserves / ef.target_amount) * 100)) : 100;
+        const fill = document.getElementById('planRunwayProgressFill');
+        if (fill) fill.style.width = `${pct}%`;
+
+        const pctLabel = document.getElementById('planRunwayProgressPct');
+        if (pctLabel) pctLabel.textContent = `${pct}% Funded of ${ef.target_months}-Month Target`;
+
+        const sipText = document.getElementById('planRecommendedSipText');
+        if (sipText) {
+          sipText.textContent = ef.recommended_monthly_contribution > 0 ?
+            `Recommended Allocation: ₹${Number(ef.recommended_monthly_contribution).toLocaleString('en-IN')}/mo` :
+            'Full Cushion Maintained';
+        }
+      }
+
+      // Render 4 Salary Buckets
+      renderSalaryBuckets(analysis.buckets);
+
+      // Render Financial Goals
+      await loadFinancialGoals();
+    } catch (e) {
+      console.error('Failed to load salary plan:', e);
+    }
+  }
+
+  function renderSalaryBuckets(buckets) {
+    const grid = document.getElementById('salaryBucketsGrid');
+    if (!grid || !buckets) return;
+
+    grid.innerHTML = buckets.map(b => {
+      const isOverspent = b.status === 'overspent';
+      const isAchieved = b.status === 'achieved';
+      const progressWidth = Math.min(100, b.percent_used || 0);
+
+      let tagHtml = `<span class="bucket-tag" style="background: ${b.color}22; color: ${b.color}; border: 1px solid ${b.color}44;">Target: ${b.target_percent}%</span>`;
+      if (isOverspent) {
+        tagHtml = `<span class="bucket-tag text-rose" style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3);">⚠️ Overspent</span>`;
+      } else if (isAchieved) {
+        tagHtml = `<span class="bucket-tag text-emerald" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);">🎉 Target Hit</span>`;
+      }
+
+      return `
+        <div class="bucket-card" style="border-top: 3px solid ${b.color};">
+          <div class="bucket-header">
+            <div class="bucket-title-box">
+              <span style="font-size: 16px;">${b.key === 'needs' ? '🛡️' : b.key === 'wants' ? '✨' : b.key === 'debts' ? '🏛️' : '📈'}</span>
+              <span class="bucket-title">${escapeHtml(b.title)}</span>
+            </div>
+            ${tagHtml}
+          </div>
+
+          <div class="bucket-amount-box">
+            <div class="bucket-actual">${formatCurrency(b.actual)}</div>
+            <div class="bucket-target">Planned Budget: <strong>${formatCurrency(b.budget)}</strong> (${b.target_percent}%)</div>
+          </div>
+
+          <div class="bucket-progress-bar">
+            <div class="bucket-progress-fill" style="width: ${progressWidth}%; background-color: ${isOverspent ? '#f43f5e' : b.color};"></div>
+          </div>
+
+          <div class="bucket-footer-stats">
+            <span>Used: <strong>${b.percent_used}%</strong></span>
+            <span>${b.remaining >= 0 ? 'Surplus: ' : 'Over: '}<strong>${formatCurrency(Math.abs(b.remaining))}</strong></span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function openModalSalaryPlan() {
+    try {
+      const plan = await api('/api/salary-plan');
+      state.salaryPlan = plan;
+
+      document.getElementById('planMonthlySalary').value = plan.monthly_salary || 75000;
+      document.getElementById('planEmergencyTargetMonths').value = plan.emergency_fund_target_months || 6;
+
+      // Update preset buttons
+      const rule = plan.rule_type || '50_30_20';
+      document.querySelectorAll('.btn-preset').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-rule') === rule);
+      });
+
+      // Set sliders
+      const needs = plan.needs_percent != null ? plan.needs_percent : 50;
+      const wants = plan.wants_percent != null ? plan.wants_percent : 30;
+      const debts = plan.debts_percent != null ? plan.debts_percent : 10;
+      const savings = plan.savings_percent != null ? plan.savings_percent : 10;
+
+      document.getElementById('sliderNeeds').value = needs;
+      document.getElementById('sliderWants').value = wants;
+      document.getElementById('sliderDebts').value = debts;
+      document.getElementById('sliderSavings').value = savings;
+
+      updateSalarySliderLabels();
+      openModal('modalSalaryPlan');
+    } catch (e) {
+      console.error('Failed to open salary plan modal:', e);
+    }
+  }
+
+  function updateSalarySliderLabels() {
+    const salary = parseFloat(document.getElementById('planMonthlySalary')?.value) || 0;
+    const needs = parseFloat(document.getElementById('sliderNeeds')?.value) || 0;
+    const wants = parseFloat(document.getElementById('sliderWants')?.value) || 0;
+    const debts = parseFloat(document.getElementById('sliderDebts')?.value) || 0;
+    const savings = parseFloat(document.getElementById('sliderSavings')?.value) || 0;
+
+    const lblNeeds = document.getElementById('labelNeedsPct');
+    if (lblNeeds) lblNeeds.textContent = `${needs}% (${formatCurrency(salary * (needs / 100))})`;
+
+    const lblWants = document.getElementById('labelWantsPct');
+    if (lblWants) lblWants.textContent = `${wants}% (${formatCurrency(salary * (wants / 100))})`;
+
+    const lblDebts = document.getElementById('labelDebtsPct');
+    if (lblDebts) lblDebts.textContent = `${debts}% (${formatCurrency(salary * (debts / 100))})`;
+
+    const lblSavings = document.getElementById('labelSavingsPct');
+    if (lblSavings) lblSavings.textContent = `${savings}% (${formatCurrency(salary * (savings / 100))})`;
+
+    const total = needs + wants + debts + savings;
+    const lblTotal = document.getElementById('labelTotalAllocation');
+    if (lblTotal) {
+      lblTotal.textContent = `${total}%`;
+      lblTotal.className = total === 100 ? 'text-emerald' : 'text-rose';
+    }
+  }
+
+  async function handleSaveSalaryPlan(e) {
+    e.preventDefault();
+    const salary = parseFloat(document.getElementById('planMonthlySalary').value) || 0;
+    const needs = parseFloat(document.getElementById('sliderNeeds').value) || 0;
+    const wants = parseFloat(document.getElementById('sliderWants').value) || 0;
+    const debts = parseFloat(document.getElementById('sliderDebts').value) || 0;
+    const savings = parseFloat(document.getElementById('sliderSavings').value) || 0;
+    const efund = parseInt(document.getElementById('planEmergencyTargetMonths').value) || 6;
+
+    const total = needs + wants + debts + savings;
+    if (total !== 100) {
+      if (!confirm(`Warning: Total allocation is ${total}% (not 100%). Do you still want to apply this budget?`)) return;
+    }
+
+    const activePreset = document.querySelector('.btn-preset.active')?.getAttribute('data-rule') || '50_30_20';
+
+    try {
+      await api('/api/salary-plan', {
+        method: 'POST',
+        body: JSON.stringify({
+          monthly_salary: salary,
+          rule_type: activePreset,
+          needs_percent: needs,
+          wants_percent: wants,
+          debts_percent: debts,
+          savings_percent: savings,
+          emergency_fund_target_months: efund
+        })
+      });
+      showToast('Salary Budget Plan applied!', 'success');
+      closeModal('modalSalaryPlan');
+      await loadSalaryPlan();
+      if (state.currentTab === 'dashboard') loadDashboard();
+    } catch (err) {
+      showToast(err.message || 'Failed to save salary plan', 'error');
+    }
+  }
+
+  // ====================================================================
+  // 10. FINANCIAL GOALS ENGINE
+  // ====================================================================
+  async function loadFinancialGoals() {
+    try {
+      const data = await api('/api/financial-goals');
+      state.financialGoals = data.goals || [];
+      renderFinancialGoalsGrid();
+    } catch (e) {
+      console.error('Failed to load goals:', e);
+    }
+  }
+
+  function renderFinancialGoalsGrid() {
+    const container = document.getElementById('financialGoalsGrid');
+    if (!container) return;
+
+    const goals = state.financialGoals || [];
+    if (goals.length === 0) {
+      container.innerHTML = '<div class="empty-state-card text-center p-3 text-muted">No financial goals defined yet. Click "+ Add Goal" to set a milestone!</div>';
+      return;
+    }
+
+    const catIcons = {
+      emergency_fund: '🛡️',
+      vehicle: '🚗',
+      home: '🏡',
+      retirement: '🏖️',
+      education: '🎓',
+      vacation: '✈️',
+      wealth: '💰'
+    };
+
+    container.innerHTML = goals.map(g => {
+      const pct = g.target_amount > 0 ? Math.min(100, Math.round(((g.current_amount || 0) / g.target_amount) * 100)) : 0;
+      const icon = catIcons[g.category] || '🎯';
+      const isAchieved = (g.current_amount || 0) >= g.target_amount;
+
+      return `
+        <div class="goal-card">
+          <div class="goal-card-top">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 20px;">${icon}</span>
+              <h4 class="goal-title">${escapeHtml(g.title)}</h4>
+            </div>
+            <span class="goal-meta-pill ${g.priority === 'high' ? 'text-rose' : g.priority === 'medium' ? 'text-indigo' : 'text-muted'}" style="background: rgba(255,255,255,0.06);">
+              ${g.priority || 'medium'}
+            </span>
+          </div>
+
+          <div class="goal-numbers-row">
+            <span class="goal-saved-val">${formatCurrency(g.current_amount)}</span>
+            <span class="goal-target-val">Target: <strong>${formatCurrency(g.target_amount)}</strong></span>
+          </div>
+
+          <div class="goal-progress-bar">
+            <div class="goal-progress-fill" style="width: ${pct}%; background: ${isAchieved ? '#10b981' : 'linear-gradient(90deg, #3b82f6, #6366f1)'};"></div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-muted);">
+            <span>${pct}% Completed</span>
+            <span>${g.monthly_contribution > 0 ? `+${formatCurrency(g.monthly_contribution)}/mo` : ''}</span>
+          </div>
+
+          <div class="goal-footer-actions">
+            <span class="goal-date-label">📅 Target: ${g.target_date || 'Ongoing'}</span>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-sm edit-goal-btn" data-id="${g.id}">✏️</button>
+              <button class="btn btn-danger btn-sm delete-goal-btn" data-id="${g.id}">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.edit-goal-btn').forEach(btn => {
+      btn.onclick = () => openModalGoal(parseInt(btn.getAttribute('data-id')));
+    });
+
+    container.querySelectorAll('.delete-goal-btn').forEach(btn => {
+      btn.onclick = () => deleteFinancialGoal(parseInt(btn.getAttribute('data-id')));
+    });
+  }
+
+  function openModalGoal(goalId = null) {
+    state.editingGoalId = goalId;
+    const form = document.getElementById('formFinancialGoal');
+    if (!form) return;
+    form.reset();
+
+    document.getElementById('goalEditId').value = goalId || '';
+    document.getElementById('modalGoalTitle').textContent = goalId ? 'Edit Financial Goal' : 'Add Financial Goal';
+
+    // Populate investments link
+    const invSelect = document.getElementById('goalLinkedInvestment');
+    if (invSelect) {
+      invSelect.innerHTML = '<option value="">-- None (Track Separately) --</option>' +
+        (state.investments || []).map(i => `<option value="${i.id}">📈 ${escapeHtml(i.name)} (${formatCurrency(i.current_value)})</option>`).join('');
+    }
+
+    if (goalId) {
+      const g = (state.financialGoals || []).find(item => item.id === goalId);
+      if (g) {
+        document.getElementById('goalTitle').value = g.title || '';
+        document.getElementById('goalCategory').value = g.category || 'wealth';
+        document.getElementById('goalPriority').value = g.priority || 'medium';
+        document.getElementById('goalTargetAmount').value = g.target_amount || '';
+        document.getElementById('goalCurrentAmount').value = g.current_amount || 0;
+        document.getElementById('goalTargetDate').value = g.target_date || '';
+        document.getElementById('goalMonthlyContribution').value = g.monthly_contribution || '';
+        if (invSelect) invSelect.value = g.linked_investment_id || '';
+      }
+    }
+
+    openModal('modalFinancialGoal');
+  }
+
+  async function handleSaveGoal(e) {
+    e.preventDefault();
+    const goalId = state.editingGoalId;
+    const payload = {
+      title: document.getElementById('goalTitle').value.trim(),
+      category: document.getElementById('goalCategory').value,
+      priority: document.getElementById('goalPriority').value,
+      target_amount: parseFloat(document.getElementById('goalTargetAmount').value) || 0,
+      current_amount: parseFloat(document.getElementById('goalCurrentAmount').value) || 0,
+      target_date: document.getElementById('goalTargetDate').value || null,
+      monthly_contribution: parseFloat(document.getElementById('goalMonthlyContribution').value) || 0,
+      linked_investment_id: document.getElementById('goalLinkedInvestment').value ? parseInt(document.getElementById('goalLinkedInvestment').value) : null
+    };
+
+    try {
+      if (goalId) {
+        await api(`/api/financial-goals/${goalId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        showToast('Financial goal updated', 'success');
+      } else {
+        await api('/api/financial-goals', { method: 'POST', body: JSON.stringify(payload) });
+        showToast('New financial goal created!', 'success');
+      }
+      closeModal('modalFinancialGoal');
+      await loadFinancialGoals();
+    } catch (err) {
+      showToast(err.message || 'Failed to save goal', 'error');
+    }
+  }
+
+  async function deleteFinancialGoal(goalId) {
+    if (!confirm('Are you sure you want to delete this financial goal?')) return;
+    try {
+      await api(`/api/financial-goals/${goalId}`, { method: 'DELETE' });
+      showToast('Financial goal deleted', 'success');
+      await loadFinancialGoals();
+    } catch (err) {
+      showToast(err.message || 'Failed to delete goal', 'error');
+    }
+  }
+
+  // ====================================================================
   // CRUD & ACTION MODAL HANDLERS
   // ====================================================================
 
@@ -1775,6 +2501,13 @@
     if (cardLinkedEl) {
       cardLinkedEl.innerHTML = '<option value="">None / Standalone Card (No Account at this Bank)</option>' +
         accData.accounts.map(a => `<option value="${a.id}">🏦 ${escapeHtml(a.name)} (${formatCurrency(a.balance)}) - Auto-Pay Ready</option>`).join('');
+    }
+
+    // Populate Investment linked account
+    const invLinked = document.getElementById('invLinkedAccount');
+    if (invLinked) {
+      invLinked.innerHTML = '<option value="">-- Select Bank (Optional) --</option>' +
+        accData.accounts.map(a => `<option value="${a.id}">🏦 ${escapeHtml(a.name)} (${formatCurrency(a.balance)})</option>`).join('');
     }
 
     // Populate Optional Links: Cards, Loans, Borrows
@@ -2391,6 +3124,8 @@
     if (state.currentTab === 'transactions') loadTransactions();
     if (state.currentTab === 'accounts') loadAccounts();
     if (state.currentTab === 'debts') loadDebts();
+    if (state.currentTab === 'investments') loadInvestments();
+    if (state.currentTab === 'salaryplan') loadSalaryPlan();
     if (state.currentTab === 'reports') loadReports();
     if (state.currentTab === 'carryover') loadCarryover();
   }
@@ -2967,6 +3702,7 @@
         name: document.getElementById('catName').value,
         type: document.getElementById('catType').value,
         budget_limit: parseFloat(document.getElementById('catBudget').value) || 0,
+        classification: document.getElementById('catClassification')?.value || 'need',
         color: document.getElementById('catColor').value
       };
 
@@ -2977,7 +3713,62 @@
       populateCategoryDropdowns();
     });
 
-    // 10. Authentication & Multi-Tenant Events
+    // 10. Investments, Salary Plan & Goals Event Handlers
+    document.getElementById('dashInvestmentsBox')?.addEventListener('click', () => switchTab('investments'));
+    document.getElementById('dashHealthScoreBox')?.addEventListener('click', () => switchTab('salaryplan'));
+
+    document.getElementById('btnOpenAddInvestment')?.addEventListener('click', () => openModalInvestment());
+    document.getElementById('formInvestment')?.addEventListener('submit', handleSaveInvestment);
+    document.getElementById('invSipEnabled')?.addEventListener('change', (e) => {
+      const fields = document.getElementById('invSipFields');
+      if (fields) fields.style.display = e.target.checked ? 'block' : 'none';
+    });
+    document.querySelectorAll('#investFilterPills .invest-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#investFilterPills .invest-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.selectedAssetFilter = btn.getAttribute('data-filter') || 'all';
+        renderInvestmentsTable();
+      });
+    });
+
+    document.getElementById('btnOpenConfigureSalaryPlan')?.addEventListener('click', openModalSalaryPlan);
+    document.getElementById('formSalaryPlan')?.addEventListener('submit', handleSaveSalaryPlan);
+    document.getElementById('salaryPlanMonthPicker')?.addEventListener('change', () => loadSalaryPlan());
+
+    document.querySelectorAll('.rule-presets-flex .btn-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.rule-presets-flex .btn-preset').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const rule = btn.getAttribute('data-rule');
+        if (rule === '50_30_20') {
+          document.getElementById('sliderNeeds').value = 50;
+          document.getElementById('sliderWants').value = 30;
+          document.getElementById('sliderDebts').value = 10;
+          document.getElementById('sliderSavings').value = 10;
+        } else if (rule === '60_20_20') {
+          document.getElementById('sliderNeeds').value = 60;
+          document.getElementById('sliderWants').value = 20;
+          document.getElementById('sliderDebts').value = 0;
+          document.getElementById('sliderSavings').value = 20;
+        } else if (rule === 'debt_focus') {
+          document.getElementById('sliderNeeds').value = 40;
+          document.getElementById('sliderWants').value = 20;
+          document.getElementById('sliderDebts').value = 30;
+          document.getElementById('sliderSavings').value = 10;
+        }
+        updateSalarySliderLabels();
+      });
+    });
+
+    ['sliderNeeds', 'sliderWants', 'sliderDebts', 'sliderSavings', 'planMonthlySalary'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', updateSalarySliderLabels);
+    });
+
+    document.getElementById('btnOpenAddGoal')?.addEventListener('click', () => openModalGoal());
+    document.getElementById('formFinancialGoal')?.addEventListener('submit', handleSaveGoal);
+
+    // 11. Authentication & Multi-Tenant Events
     document.getElementById('tabSignInBtn')?.addEventListener('click', () => switchAuthTab('signInTab'));
     document.getElementById('tabSignUpBtn')?.addEventListener('click', () => switchAuthTab('signUpTab'));
 

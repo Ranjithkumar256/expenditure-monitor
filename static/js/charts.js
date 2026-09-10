@@ -9,13 +9,14 @@ const PaisaCharts = {
   _cache: {
     donut: {},
     trends: {},
-    daily: {}
+    daily: {},
+    allocation: {}
   },
 
   // Clear all cached datasets and clear all canvas drawings (used on logout and user switch)
   clearAll() {
-    this._cache = { donut: {}, trends: {}, daily: {} };
-    const chartIds = ['categoryDonutChart', 'trendBarChart', 'reportsDonutChart', 'dailyExpensesChart'];
+    this._cache = { donut: {}, trends: {}, daily: {}, allocation: {} };
+    const chartIds = ['categoryDonutChart', 'trendBarChart', 'reportsDonutChart', 'dailyExpensesChart', 'chartInvestmentAllocation'];
     chartIds.forEach(id => {
       const canvas = document.getElementById(id);
       if (canvas) {
@@ -27,6 +28,8 @@ const PaisaCharts = {
     });
     const legend = document.getElementById('donutChartLegend');
     if (legend) legend.innerHTML = '';
+    const investLegend = document.getElementById('investmentDonutLegend');
+    if (investLegend) investLegend.innerHTML = '';
   },
 
   // Setup canvas for Retina and Android high-DPI screens with dynamic container width
@@ -364,6 +367,76 @@ const PaisaCharts = {
     ctx.fill();
   },
 
+  // 4. Donut Chart for Investment Asset Allocation
+  renderInvestmentAllocationChart(canvasId, breakdown, currencyFormatter) {
+    this._cache.allocation = this._cache.allocation || {};
+    this._cache.allocation[canvasId] = { breakdown, currencyFormatter };
+
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const { ctx, width, height } = this.setupCanvas(canvas, 230);
+    ctx.clearRect(0, 0, width, height);
+
+    if (!breakdown || breakdown.length === 0) {
+      ctx.fillStyle = '#64748b';
+      ctx.font = '13px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('No active investments in portfolio', width / 2, height / 2);
+      return;
+    }
+
+    const total = breakdown.reduce((sum, b) => sum + (b.current_value || 0), 0);
+    if (total === 0) {
+      ctx.fillStyle = '#64748b';
+      ctx.font = '13px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('₹0.00 Portfolio Value', width / 2, height / 2);
+      return;
+    }
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const outerRadius = Math.max(50, Math.min(centerX, centerY) - 16);
+    const innerRadius = Math.max(30, outerRadius * 0.62);
+
+    let startAngle = -Math.PI / 2;
+
+    breakdown.forEach(item => {
+      const sliceAngle = ((item.current_value || 0) / total) * (Math.PI * 2);
+      if (sliceAngle <= 0) return;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, outerRadius, startAngle, startAngle + sliceAngle);
+      ctx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true);
+      ctx.closePath();
+
+      ctx.fillStyle = item.color || '#3b82f6';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+      ctx.shadowBlur = 4;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#0b1329';
+      ctx.stroke();
+
+      startAngle += sliceAngle;
+    });
+
+    // Center text with total portfolio value
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('PORTFOLIO', centerX, centerY - 12);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
+    const totalStr = currencyFormatter ? currencyFormatter(total) : `₹${total.toLocaleString('en-IN')}`;
+    ctx.fillText(totalStr, centerX, centerY + 8);
+  },
+
   // Redraw all cached charts with updated responsive dimensions
   redrawAll() {
     // Redraw Donut charts
@@ -392,6 +465,17 @@ const PaisaCharts = {
         this.renderDailyChart(canvasId, item.days, item.peakDate, item.currencyFormatter);
       }
     });
+
+    // Redraw Allocation charts
+    if (this._cache.allocation) {
+      Object.keys(this._cache.allocation).forEach(canvasId => {
+        const el = document.getElementById(canvasId);
+        if (el && (el.offsetParent !== null || el.clientWidth > 0)) {
+          const item = this._cache.allocation[canvasId];
+          this.renderInvestmentAllocationChart(canvasId, item.breakdown, item.currencyFormatter);
+        }
+      });
+    }
   }
 };
 

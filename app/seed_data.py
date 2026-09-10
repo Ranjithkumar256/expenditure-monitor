@@ -23,6 +23,9 @@ def clear_dummy_data() -> None:
         cursor.execute("DELETE FROM loans")
         cursor.execute("DELETE FROM borrows_lent")
         cursor.execute("DELETE FROM monthly_carryovers")
+        cursor.execute("DELETE FROM investments")
+        cursor.execute("DELETE FROM financial_goals")
+        cursor.execute("DELETE FROM salary_plans")
 
         # Keep Profile 1
         cursor.execute("SELECT id FROM profiles WHERE id = 1")
@@ -56,13 +59,15 @@ def seed_database(force_reseed: bool = False) -> None:
 
         print("Seeding fresh multi-profile financial records...")
 
-        # Clear existing records to ensure clean deterministic IDs
         cursor.execute("DELETE FROM transactions")
         cursor.execute("DELETE FROM accounts")
         cursor.execute("DELETE FROM cards")
         cursor.execute("DELETE FROM loans")
         cursor.execute("DELETE FROM borrows_lent")
         cursor.execute("DELETE FROM monthly_carryovers")
+        cursor.execute("DELETE FROM investments")
+        cursor.execute("DELETE FROM salary_plans")
+        cursor.execute("DELETE FROM financial_goals")
 
         # 0. Ensure 2 Profiles exist
         cursor.execute("SELECT id FROM profiles WHERE id = 1")
@@ -162,6 +167,33 @@ def seed_database(force_reseed: bool = False) -> None:
             card_id, loan_id, borrow_id, payment_mode, description, tags
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, p1_trans)
+
+        # Profile 1 Investments
+        cursor.execute("""
+        INSERT INTO investments (id, profile_id, name, asset_type, platform, folio_or_account_number, invested_amount, current_value, sip_enabled, sip_amount, sip_day, linked_account_id, start_date, notes) VALUES
+            (1, 1, 'Parag Parikh Flexi Cap Fund', 'mutual_fund', 'Groww', '120485/91', 120000.00, 148500.00, 1, 10000.00, 5, 1, '2023-04-10', 'Long term equity wealth compounding'),
+            (2, 1, 'UTI Nifty 50 Index Fund', 'mutual_fund', 'Zerodha Coin', '881920/44', 80000.00, 96000.00, 1, 5000.00, 10, 1, '2023-06-15', 'Low cost passive index fund'),
+            (3, 1, 'Tata Motors & Infosys Equity', 'stocks', 'Zerodha Kite', 'DMAT-90124', 65000.00, 78500.00, 0, 0.0, 5, 1, '2023-08-01', 'Direct Indian equities'),
+            (4, 1, 'SBI 1-Year Cumulative Fixed Deposit', 'fixed_deposit', 'SBI NetBanking', 'FD-401928', 100000.00, 107100.00, 0, 0.0, 1, 2, '2023-11-01', 'Guaranteed debt return safety'),
+            (5, 1, 'Sovereign Gold Bond 2023-24', 'gold', 'RBI Retail Direct', 'SGB-2023-IV', 50000.00, 62400.00, 0, 0.0, 1, 1, '2023-09-20', 'Gold hedge + 2.5% p.a. interest'),
+            (6, 1, 'EPF & VPF Retirement Corpus', 'epf_ppf', 'EPFO Portal', 'UAN-10029182', 240000.00, 278000.00, 1, 6000.00, 1, 1, '2022-01-01', 'Provident fund retirement nest egg');
+        """)
+
+        # Profile 1 Salary Budget Plan (50/30/20 Rule based on ₹1,25,000 monthly take-home)
+        cursor.execute("""
+        INSERT OR REPLACE INTO salary_plans (
+            profile_id, monthly_salary, rule_type, needs_percent, wants_percent,
+            savings_percent, debts_percent, emergency_fund_target_months, notes
+        ) VALUES (1, 125000.00, '50_30_20', 50.0, 30.0, 10.0, 10.0, 6, 'Standard disciplined wealth building budget');
+        """)
+
+        # Profile 1 Financial Goals
+        cursor.execute("""
+        INSERT INTO financial_goals (id, profile_id, title, category, target_amount, current_amount, target_date, monthly_contribution, priority, linked_investment_id, linked_account_id, notes) VALUES
+            (1, 1, '6-Month Emergency Safety Cushion', 'emergency_fund', 300000.00, 185000.00, '2026-12', 15000.00, 'high', 4, 1, 'Liquid fortress in SBI FD & Savings'),
+            (2, 1, 'New Electric Car (Tata Curvv EV)', 'vehicle', 350000.00, 120000.00, '2027-06', 15000.00, 'medium', 1, 1, 'Down payment fund for electric SUV'),
+            (3, 1, 'Japan Autumn Vacation with Family', 'vacation', 200000.00, 65000.00, '2027-10', 10000.00, 'low', 2, 1, 'Tokyo & Kyoto 10-day trip');
+        """)
 
         # ========================================================
         # PROFILE 2: BUSINESS & CONSULTING

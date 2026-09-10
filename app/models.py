@@ -274,6 +274,7 @@ class CategoryCreate(BaseModel):
     icon: Optional[str] = "tag"
     color: Optional[str] = "#64748b"
     budget_limit: Optional[float] = 0.0
+    classification: Optional[str] = "need"  # 'need', 'want', 'debt', 'investment'
 
 class CategoryUpdate(BaseModel):
     name: Optional[str] = None
@@ -281,6 +282,87 @@ class CategoryUpdate(BaseModel):
     icon: Optional[str] = None
     color: Optional[str] = None
     budget_limit: Optional[float] = None
+    classification: Optional[str] = None
+
+# ==========================================
+# Investments Models
+# ==========================================
+class InvestmentCreate(BaseModel):
+    profile_id: Optional[int] = None
+    name: str = Field(..., min_length=1, description="e.g. Nifty 50 Index, Tata Motors, SBI FD, Gold SGB")
+    asset_type: str = Field(default="mutual_fund", description="mutual_fund, stocks, fixed_deposit, gold, epf_ppf, real_estate, crypto, other")
+    platform: Optional[str] = "Zerodha"
+    folio_or_account_number: Optional[str] = ""
+    invested_amount: float = Field(default=0.0, ge=0)
+    current_value: float = Field(default=0.0, ge=0)
+    allocation_category: Optional[str] = "wealth"
+    sip_enabled: Optional[int] = 0
+    sip_amount: Optional[float] = 0.0
+    sip_day: Optional[int] = 5
+    linked_account_id: Optional[int] = None
+    start_date: Optional[str] = None
+    maturity_date: Optional[str] = None
+    notes: Optional[str] = ""
+
+class InvestmentUpdate(BaseModel):
+    name: Optional[str] = None
+    asset_type: Optional[str] = None
+    platform: Optional[str] = None
+    folio_or_account_number: Optional[str] = None
+    invested_amount: Optional[float] = Field(None, ge=0)
+    current_value: Optional[float] = Field(None, ge=0)
+    allocation_category: Optional[str] = None
+    sip_enabled: Optional[int] = None
+    sip_amount: Optional[float] = None
+    sip_day: Optional[int] = None
+    linked_account_id: Optional[int] = None
+    start_date: Optional[str] = None
+    maturity_date: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+# ==========================================
+# Salary Plan & Budget Allocation Models
+# ==========================================
+class SalaryPlanUpdate(BaseModel):
+    profile_id: Optional[int] = None
+    monthly_salary: float = Field(..., ge=0, description="Monthly in-hand / take-home salary in INR")
+    rule_type: Optional[str] = "50_30_20"  # '50_30_20', '60_20_20', 'debt_focus', 'custom'
+    needs_percent: Optional[float] = 50.0
+    wants_percent: Optional[float] = 30.0
+    savings_percent: Optional[float] = 10.0
+    debts_percent: Optional[float] = 10.0
+    emergency_fund_target_months: Optional[int] = 6
+    notes: Optional[str] = ""
+
+# ==========================================
+# Financial Goals Models
+# ==========================================
+class FinancialGoalCreate(BaseModel):
+    profile_id: Optional[int] = None
+    title: str = Field(..., min_length=1, description="e.g. Emergency Fund (6 Months), New Car, House Down Payment")
+    category: Optional[str] = "wealth"  # emergency_fund, home, vehicle, retirement, education, vacation, wealth
+    target_amount: float = Field(..., gt=0)
+    current_amount: Optional[float] = 0.0
+    target_date: Optional[str] = None
+    monthly_contribution: Optional[float] = 0.0
+    priority: Optional[str] = "medium"  # high, medium, low
+    linked_investment_id: Optional[int] = None
+    linked_account_id: Optional[int] = None
+    notes: Optional[str] = ""
+
+class FinancialGoalUpdate(BaseModel):
+    title: Optional[str] = None
+    category: Optional[str] = None
+    target_amount: Optional[float] = Field(None, gt=0)
+    current_amount: Optional[float] = Field(None, ge=0)
+    target_date: Optional[str] = None
+    monthly_contribution: Optional[float] = None
+    priority: Optional[str] = None
+    status: Optional[str] = None  # in_progress, achieved, paused
+    linked_investment_id: Optional[int] = None
+    linked_account_id: Optional[int] = None
+    notes: Optional[str] = None
 
 # ==========================================
 # Month-end Carry Forward Models
@@ -301,3 +383,4 @@ class SettingsUpdate(BaseModel):
     theme: Optional[str] = None
     active_profile_id: Optional[int] = None
     carryover_mode: Optional[str] = None
+
