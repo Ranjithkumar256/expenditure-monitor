@@ -2587,6 +2587,29 @@
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
         </form>
+      <!-- RESTORE DATABASE ON NEW INSTALL (Survives Uninstall in Download Folder) -->
+      <div id="newInstallBackupCard" class="auth-restore-box" style="display: none; margin-top: 18px; padding: 14px 16px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; text-align: left; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <span style="font-size: 22px; line-height: 1.2;">📦</span>
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+              <strong style="font-size: 13.5px; color: #a7f3d0;">New Install? Restore Database</strong>
+              <span class="badge badge-emerald" style="font-size: 10px; padding: 2px 6px;">Download Folder</span>
+            </div>
+            <p style="font-size: 11.5px; color: var(--text-muted); margin: 4px 0 0 0; line-height: 1.45;">
+              Restore your previous financial data from <code>Download/PaisaTrackbackupdatabase.json</code>.
+            </p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button type="button" class="btn btn-outline btn-sm" id="btnAuthAutoRestore" style="flex: 1; font-size: 11.5px; padding: 7px 10px; border-color: rgba(16, 185, 129, 0.5); color: #a7f3d0; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>⚡ Auto-Restore</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" id="btnAuthFileRestore" style="flex: 1; font-size: 11.5px; padding: 7px 10px; border-color: rgba(99, 102, 241, 0.5); color: #c7d2fe; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>📁 Choose File (.json)</span>
+          </button>
+        </div>
+        <input type="file" id="inputAuthImportBackup" accept=".json" style="display: none;">
       </div>
 
       <div class="auth-footer-note">

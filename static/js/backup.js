@@ -127,11 +127,12 @@
     },
 
     // -------------------------------------------------------------
-    // 2. DEDICATED FILE STORAGE & DATABASE PERSISTENCE (Android/data/)
+    // 2. DEDICATED FILE STORAGE & DATABASE PERSISTENCE (Android/data/ & Download/)
     // -------------------------------------------------------------
     APP_PACKAGE_ID: 'com.paisatrack.app',
     APP_STORAGE_DIR: 'Android/data/com.paisatrack.app/files/',
     BACKUP_FILENAME: 'database_backup.json',
+    DOWNLOAD_BACKUP_FILENAME: 'PaisaTrackbackupdatabase.json',
 
     async gatherDatabasePayload() {
       let payload = {
@@ -139,6 +140,7 @@
         version: '1.2.0',
         package_id: this.APP_PACKAGE_ID,
         designated_path: `Internal Storage/${this.APP_STORAGE_DIR}${this.BACKUP_FILENAME}`,
+        download_path: `Download/${this.DOWNLOAD_BACKUP_FILENAME}`,
         exported_at: new Date().toISOString(),
         device: navigator.userAgent,
         data: {}
@@ -170,7 +172,7 @@
 
     // -------------------------------------------------------------
     // ON-DEVICE DATABASE PERSISTENCE & STARTUP SYNC
-    // Directly reads database_backup.json on install/reinstall or if modified externally
+    // Reads Download/PaisaTrackbackupdatabase.json or database_backup.json on install/reinstall
     // -------------------------------------------------------------
     calculateStringHash(str) {
       let hash = 0;
@@ -188,31 +190,61 @@
 
       try {
         let rawData = null;
-        let sourceDir = `Internal Storage/${this.APP_STORAGE_DIR}${this.BACKUP_FILENAME}`;
+        let sourceDir = `Download/${this.DOWNLOAD_BACKUP_FILENAME}`;
 
-        // 1. First look in dedicated Android/data directory
+        // 1. First probe Download folder (persisted across uninstalls)
         try {
-          const res = await Filesystem.readFile({
-            path: this.BACKUP_FILENAME,
-            directory: 'EXTERNAL',
+          const res0 = await Filesystem.readFile({
+            path: 'Download/' + this.DOWNLOAD_BACKUP_FILENAME,
+            directory: 'EXTERNAL_STORAGE',
             encoding: 'utf8'
           });
-          if (res && res.data) {
-            rawData = res.data;
+          if (res0 && res0.data) {
+            rawData = res0.data;
+            sourceDir = `Download/${this.DOWNLOAD_BACKUP_FILENAME}`;
           }
-        } catch (e1) {
-          // 2. If Android/data is empty (e.g. fresh reinstall), check persistent Documents directory
+        } catch (e0) {}
+
+        // 2. Probe dedicated Android/data directory
+        if (!rawData) {
+          try {
+            const res = await Filesystem.readFile({
+              path: this.BACKUP_FILENAME,
+              directory: 'EXTERNAL',
+              encoding: 'utf8'
+            });
+            if (res && res.data) {
+              rawData = res.data;
+              sourceDir = `Internal Storage/${this.APP_STORAGE_DIR}${this.BACKUP_FILENAME}`;
+            }
+          } catch (e1) {}
+        }
+
+        // 3. If empty, probe persistent Documents directory
+        if (!rawData) {
           try {
             const res2 = await Filesystem.readFile({
-              path: this.BACKUP_FILENAME,
+              path: this.DOWNLOAD_BACKUP_FILENAME,
               directory: 'DOCUMENTS',
               encoding: 'utf8'
             });
             if (res2 && res2.data) {
               rawData = res2.data;
-              sourceDir = `Documents/${this.BACKUP_FILENAME}`;
+              sourceDir = `Documents/${this.DOWNLOAD_BACKUP_FILENAME}`;
             }
-          } catch (e2) {}
+          } catch (e2) {
+            try {
+              const res3 = await Filesystem.readFile({
+                path: this.BACKUP_FILENAME,
+                directory: 'DOCUMENTS',
+                encoding: 'utf8'
+              });
+              if (res3 && res3.data) {
+                rawData = res3.data;
+                sourceDir = `Documents/${this.BACKUP_FILENAME}`;
+              }
+            } catch (e3) {}
+          }
         }
 
         if (!rawData) return;
@@ -221,9 +253,7 @@
         const lastLoadedHash = localStorage.getItem('paisa_loaded_db_file_hash');
         const hasExistingData = localStorage.getItem('paisa_local_users_store_v2') || localStorage.getItem('paisa_local_profiles_v1');
 
-        // Automatically load on:
-        // A) Reinstall / fresh install (!hasExistingData)
-        // B) Database modified externally in a file manager (currentFileHash !== lastLoadedHash)
+        // Automatically load on reinstall / fresh install or external modification
         if (!hasExistingData || (lastLoadedHash && currentFileHash !== lastLoadedHash)) {
           console.log(`[PaisaTrack] Auto-syncing database from ${sourceDir}...`);
           const payload = JSON.parse(rawData);
@@ -249,13 +279,26 @@
         const payload = await this.gatherDatabasePayload();
         const jsonStr = JSON.stringify(payload, null, 2);
         const fileName = this.BACKUP_FILENAME;
+        const downloadName = this.DOWNLOAD_BACKUP_FILENAME;
         let savedPathDescription = '';
 
-        // 1. Native Android Storage: Writes to dedicated Android/data and mirrors to Documents for uninstall survival
+        // 1. Native Android Storage: Writes to Download folder, Documents, AND dedicated Android/data
         const Filesystem = window.Capacitor?.Plugins?.Filesystem;
         if (Filesystem) {
           try {
-            // Write to dedicated internal path Android/data/com.paisatrack.app/files/database_backup.json
+            // A. Save in public Download folder: Download/PaisaTrackbackupdatabase.json (Survives uninstall)
+            try {
+              await Filesystem.writeFile({
+                path: 'Download/' + downloadName,
+                data: jsonStr,
+                directory: 'EXTERNAL_STORAGE',
+                encoding: 'utf8',
+                recursive: true
+              });
+              savedPathDescription = `Download/${downloadName}`;
+            } catch (downErr) {}
+
+            // B. Write to dedicated internal path Android/data/com.paisatrack.app/files/database_backup.json
             await Filesystem.writeFile({
               path: fileName,
               data: jsonStr,
@@ -263,10 +306,17 @@
               encoding: 'utf8',
               recursive: true
             });
-            savedPathDescription = `Internal Storage/${this.APP_STORAGE_DIR}${fileName}`;
+            if (!savedPathDescription) savedPathDescription = `Internal Storage/${this.APP_STORAGE_DIR}${fileName}`;
 
-            // Also mirror to Documents directory (documents files are never deleted on uninstall)
+            // C. Mirror to Documents directory (survives uninstall 100%)
             try {
+              await Filesystem.writeFile({
+                path: downloadName,
+                data: jsonStr,
+                directory: 'DOCUMENTS',
+                encoding: 'utf8',
+                recursive: true
+              });
               await Filesystem.writeFile({
                 path: fileName,
                 data: jsonStr,
@@ -287,7 +337,7 @@
         if (!savedPathDescription && typeof window.showSaveFilePicker === 'function') {
           try {
             const handle = await window.showSaveFilePicker({
-              suggestedName: fileName,
+              suggestedName: downloadName,
               types: [{
                 description: 'PaisaTrack JSON Database',
                 accept: { 'application/json': ['.json'] }
@@ -296,25 +346,25 @@
             const writable = await handle.createWritable();
             await writable.write(jsonStr);
             await writable.close();
-            savedPathDescription = `Selected Folder/${fileName}`;
+            savedPathDescription = `Download/${downloadName}`;
           } catch (pickerErr) {
             if (pickerErr.name === 'AbortError') return;
             console.warn('showSaveFilePicker fallback:', pickerErr);
           }
         }
 
-        // 3. Web standard download fallback
+        // 3. Web standard download fallback (automatically downloads into user's Download folder)
         if (!savedPathDescription) {
           const blob = new Blob([jsonStr], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = fileName;
+          a.download = downloadName; // 'PaisaTrackbackupdatabase.json'
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          savedPathDescription = `Downloads/${fileName} (Designated: ${this.APP_STORAGE_DIR})`;
+          savedPathDescription = `Download/${downloadName}`;
         }
 
         // Update UI status badge
@@ -325,7 +375,7 @@
         }
 
         if (window.showToast) {
-          window.showToast(`✅ Database saved to ${savedPathDescription}`, 'success');
+          window.showToast(`✅ Database saved to Download folder: ${downloadName}`, 'success');
         }
       } catch (err) {
         console.error('Export to File Manager failed:', err);
@@ -336,36 +386,54 @@
     },
 
     async restoreFromDesignatedPath() {
-      // 1. Direct restore from Android/data/com.paisatrack.app/files/database_backup.json or Documents
+      return await this.autoRestoreFromDownloadFolder();
+    },
+
+    async autoRestoreFromDownloadFolder() {
       const Filesystem = window.Capacitor?.Plugins?.Filesystem;
       if (Filesystem) {
-        try {
-          const res = await Filesystem.readFile({
-            path: this.BACKUP_FILENAME,
-            directory: 'EXTERNAL',
-            encoding: 'utf8'
-          });
-          if (res && res.data) {
-            const payload = JSON.parse(res.data);
-            return await this.applyImportedPayload(payload, `Internal Storage/${this.APP_STORAGE_DIR}${this.BACKUP_FILENAME}`, true);
-          }
-        } catch (capErr) {
+        const locations = [
+          { path: 'Download/' + this.DOWNLOAD_BACKUP_FILENAME, directory: 'EXTERNAL_STORAGE' },
+          { path: this.DOWNLOAD_BACKUP_FILENAME, directory: 'DOCUMENTS' },
+          { path: this.BACKUP_FILENAME, directory: 'DOCUMENTS' },
+          { path: this.BACKUP_FILENAME, directory: 'EXTERNAL' }
+        ];
+
+        for (const loc of locations) {
           try {
-            const res2 = await Filesystem.readFile({
-              path: this.BACKUP_FILENAME,
-              directory: 'DOCUMENTS',
+            const res = await Filesystem.readFile({
+              path: loc.path,
+              directory: loc.directory,
               encoding: 'utf8'
             });
-            if (res2 && res2.data) {
-              const payload = JSON.parse(res2.data);
-              return await this.applyImportedPayload(payload, `Documents/${this.BACKUP_FILENAME}`, true);
+            if (res && res.data) {
+              const payload = JSON.parse(res.data);
+              await this.applyImportedPayload(payload, loc.path, true);
+              return true;
             }
-          } catch (e2) {}
+          } catch (e) {}
         }
       }
 
-      // 2. If not found in native path or on web, open file picker
-      document.getElementById('inputImportFileManager')?.click();
+      // If running in browser or file not found automatically, open file picker
+      if (window.showToast) {
+        window.showToast('Please select PaisaTrackbackupdatabase.json from your Downloads folder', 'info');
+      }
+      const fileInput = document.getElementById('inputAuthImportBackup') || document.getElementById('inputImportFileManager');
+      if (fileInput) fileInput.click();
+      return false;
+    },
+
+    checkNewInstallBackupOption() {
+      const card = document.getElementById('newInstallBackupCard');
+      if (!card) return;
+      // Show on new install / fresh state before any user logs in
+      const hasUserData = localStorage.getItem('paisa_user_installed_before') || localStorage.getItem('paisa_auth_token');
+      if (!hasUserData) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
     },
 
     async applyImportedPayload(payload, sourcePathName = 'File', shouldReload = true) {
@@ -575,6 +643,24 @@
     BackupManager.checkFirstLaunchTerms();
     BackupManager.updateCloudStatusUI();
     BackupManager.syncFromDatabaseFileOnStartup();
+    BackupManager.checkNewInstallBackupOption();
+
+    // New Install Auth Backup Restore Handlers
+    document.getElementById('btnAuthAutoRestore')?.addEventListener('click', () => {
+      BackupManager.autoRestoreFromDownloadFolder();
+    });
+
+    document.getElementById('btnAuthFileRestore')?.addEventListener('click', () => {
+      document.getElementById('inputAuthImportBackup')?.click();
+    });
+
+    document.getElementById('inputAuthImportBackup')?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        BackupManager.importFromFileManager(file);
+      }
+      e.target.value = '';
+    });
 
     // Event Bindings for Terms Modal
     const agreeCheckbox = document.getElementById('termsAgreeCheckbox');

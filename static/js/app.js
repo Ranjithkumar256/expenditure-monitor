@@ -180,6 +180,9 @@
         alertBox.style.display = 'none';
       }
     }
+    if (window.BackupManager) {
+      window.BackupManager.checkNewInstallBackupOption();
+    }
   }
 
   function hideAuthOverlay() {
@@ -426,6 +429,7 @@
       state.authToken = res.token;
       state.currentUser = res.user;
       localStorage.setItem('paisa_auth_token', res.token);
+      localStorage.setItem('paisa_user_installed_before', 'true');
       localStorage.removeItem('paisatrack_active_profile_id');
       updateUserDisplay(res.user);
 
@@ -468,6 +472,7 @@
       state.authToken = res.token;
       state.currentUser = res.user;
       localStorage.setItem('paisa_auth_token', res.token);
+      localStorage.setItem('paisa_user_installed_before', 'true');
       localStorage.removeItem('paisatrack_active_profile_id');
       updateUserDisplay(res.user);
 
