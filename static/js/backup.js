@@ -56,6 +56,11 @@
         modal.style.display = 'none';
       }
       this.clearTermsValidationError();
+      if (document.body) {
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('touch-action');
+      }
     },
 
     clearTermsValidationError() {
