@@ -168,6 +168,15 @@
   // Authentication & Multi-Tenant User Management
   // ====================================================================
   function showAuthOverlay(msg = null, isSuccess = false) {
+    if (window.BackupManager) {
+      window.BackupManager.closeTermsModal();
+    }
+    const termsModal = document.getElementById('modalTermsConsent');
+    if (termsModal) {
+      termsModal.classList.remove('show');
+      termsModal.classList.remove('open');
+      termsModal.style.display = 'none';
+    }
     const overlay = document.getElementById('authOverlay');
     if (overlay) overlay.style.display = 'flex';
     const alertBox = document.getElementById('authAlert');
@@ -508,7 +517,13 @@
       sessionStorage.clear();
     } catch (e) {}
     if (window.BackupManager) {
-      window.BackupManager.clearTermsValidationError();
+      window.BackupManager.closeTermsModal();
+    }
+    const termsModal = document.getElementById('modalTermsConsent');
+    if (termsModal) {
+      termsModal.classList.remove('show');
+      termsModal.classList.remove('open');
+      termsModal.style.display = 'none';
     }
     resetClientStateAndDOM();
     switchAuthTab('signInTab');
