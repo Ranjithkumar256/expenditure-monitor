@@ -2239,6 +2239,40 @@ def delete_financial_goal(
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    css_dir = os.path.join(static_dir, "css")
+    js_dir = os.path.join(static_dir, "js")
+    if os.path.exists(css_dir):
+        app.mount("/css", StaticFiles(directory=css_dir), name="css")
+    if os.path.exists(js_dir):
+        app.mount("/js", StaticFiles(directory=js_dir), name="js")
+
+@app.get("/favicon.svg")
+def serve_favicon():
+    favicon_path = os.path.join(static_dir, "favicon.svg")
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path, media_type="image/svg+xml")
+    raise HTTPException(status_code=404)
+
+@app.get("/manifest.json")
+def serve_manifest():
+    manifest_path = os.path.join(static_dir, "manifest.json")
+    if os.path.exists(manifest_path):
+        return FileResponse(manifest_path, media_type="application/manifest+json")
+    raise HTTPException(status_code=404)
+
+@app.get("/sw.js")
+def serve_sw():
+    sw_path = os.path.join(static_dir, "sw.js")
+    if os.path.exists(sw_path):
+        return FileResponse(sw_path, media_type="application/javascript")
+    raise HTTPException(status_code=404)
+
+@app.get("/privacy.html")
+def serve_privacy():
+    privacy_path = os.path.join(static_dir, "privacy.html")
+    if os.path.exists(privacy_path):
+        return FileResponse(privacy_path)
+    raise HTTPException(status_code=404)
 
 @app.get("/")
 def serve_index():

@@ -1,6 +1,11 @@
 const CACHE_NAME = 'paisatrack-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
+  '/css/style.css',
+  '/js/app.js',
+  '/js/charts.js',
+  '/manifest.json',
+  '/favicon.svg',
   '/static/css/style.css',
   '/static/js/app.js',
   '/static/js/charts.js',

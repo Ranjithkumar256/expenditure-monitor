@@ -30,6 +30,14 @@ echo "========================================================"
 echo "📦 Step 1/3: Syncing web assets to Android platform..."
 npx cap sync android
 
+# Ensure both relative (css/...) and absolute (/static/css/...) paths work in Android WebView
+mkdir -p android/app/src/main/assets/public/static
+cp -r android/app/src/main/assets/public/css android/app/src/main/assets/public/static/ 2>/dev/null || true
+cp -r android/app/src/main/assets/public/js android/app/src/main/assets/public/static/ 2>/dev/null || true
+cp android/app/src/main/assets/public/favicon.svg android/app/src/main/assets/public/static/ 2>/dev/null || true
+cp android/app/src/main/assets/public/manifest.json android/app/src/main/assets/public/static/ 2>/dev/null || true
+echo "✅ Web assets synchronized (root & static fallback paths configured)"
+
 MODE="${1:-all}"
 
 cd android

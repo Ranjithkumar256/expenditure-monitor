@@ -3905,9 +3905,9 @@
       // 3. User authenticated: load data for this user
       await loadAppData();
 
-      // Register PWA service worker if available
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/static/sw.js').catch(() => {});
+      // Register PWA service worker if available (skip in native Capacitor app)
+      if ('serviceWorker' in navigator && !window.Capacitor) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
       }
 
       window.switchTab = switchTab;
