@@ -438,6 +438,11 @@
       // 5. Hide overlay now that fresh data is ready
       hideAuthOverlay();
       showToast(`Welcome back, ${res.user.full_name || res.user.username}!`, 'success');
+
+      // Prompt Terms every time user logs in
+      if (window.BackupManager) {
+        window.BackupManager.promptTermsOnLogin();
+      }
     } catch (err) {
       const errMsg = err.message || 'Incorrect username or password';
       showAuthOverlay(errMsg, false);
@@ -475,6 +480,11 @@
       // 5. Hide overlay now that fresh data is ready
       hideAuthOverlay();
       showToast(`Account created! Welcome to PaisaTrack.`, 'success');
+
+      // Prompt Terms every time user registers/logs in
+      if (window.BackupManager) {
+        window.BackupManager.promptTermsOnLogin();
+      }
     } catch (err) {
       const errMsg = err.message || 'Registration failed';
       showAuthOverlay(errMsg, false);
@@ -488,7 +498,13 @@
     } catch (e) {}
     localStorage.removeItem('paisa_auth_token');
     localStorage.removeItem('paisatrack_active_profile_id');
-    sessionStorage.clear();
+    try {
+      sessionStorage.removeItem('paisa_terms_accepted_session');
+      sessionStorage.clear();
+    } catch (e) {}
+    if (window.BackupManager) {
+      window.BackupManager.clearTermsValidationError();
+    }
     resetClientStateAndDOM();
     switchAuthTab('signInTab');
     showAuthOverlay('You have been logged out successfully.', true);
@@ -3905,6 +3921,11 @@
 
       // 3. User authenticated: load data for this user
       await loadAppData();
+
+      // Check terms on initial load if authenticated and not yet accepted for session
+      if (window.BackupManager && !window.BackupManager.isTermsAccepted()) {
+        window.BackupManager.showTermsModal(false);
+      }
 
       // Register PWA service worker if available (skip in native Capacitor app)
       if ('serviceWorker' in navigator && !window.Capacitor) {

@@ -111,8 +111,17 @@
       setTimeout(() => modal.classList.add('show'), 10);
     },
 
+    promptTermsOnLogin() {
+      try {
+        sessionStorage.removeItem('paisa_terms_accepted_session');
+      } catch (e) {}
+      this.clearTermsValidationError();
+      this.showTermsModal(false);
+    },
+
     checkFirstLaunchTerms() {
-      if (!this.isTermsAccepted()) {
+      const hasAuth = localStorage.getItem('paisa_auth_token');
+      if (hasAuth && !this.isTermsAccepted()) {
         this.showTermsModal(false);
       }
     },
