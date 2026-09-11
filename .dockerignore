@@ -1,0 +1,28 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+tests/
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Mobile & Capacitor Android project
+android/
+node_modules/
+package-lock.json
+build_android.sh
+*.keystore
+
+# Local databases and logs
+finance.db
+*.log
+
+# Git & IDE configs
+.git/
+.gitignore
+.DS_Store

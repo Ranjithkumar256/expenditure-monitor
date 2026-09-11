@@ -30,6 +30,12 @@ Thumbs.db
 *.swp
 *~
 
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+
 # Temporary test artifacts
 verify_*.png
 screenshot_*.png
+
