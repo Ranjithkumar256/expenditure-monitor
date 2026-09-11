@@ -92,11 +92,18 @@
       if (state.authToken) {
         headers['Authorization'] = `Bearer ${state.authToken}`;
       }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+
       const res = await fetch(endpoint, {
         cache: 'no-store',
         headers,
+        signal: controller.signal,
         ...options
       });
+      clearTimeout(timeoutId);
+
       if (res.status === 401 && !endpoint.includes('/api/auth/login') && !endpoint.includes('/api/auth/register')) {
         state.authToken = null;
         state.currentUser = null;
@@ -112,6 +119,15 @@
       }
       return await res.json();
     } catch (err) {
+      // Standalone On-Device Storage Fallback (Zero Server Mode)
+      if (window.PaisaLocalDB) {
+        try {
+          return await window.PaisaLocalDB.handleApi(endpoint, options);
+        } catch (localErr) {
+          console.warn('LocalDB fallback error:', localErr);
+        }
+      }
+
       if (err.message !== 'Authentication required') {
         showToast(err.message || 'Operation failed', 'error');
       }
