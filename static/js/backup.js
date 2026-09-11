@@ -113,8 +113,14 @@
         }
       }
 
-      modal.style.display = 'flex';
-      setTimeout(() => modal.classList.add('show'), 10);
+      modal.style.setProperty('display', 'flex', 'important');
+      modal.style.setProperty('opacity', '1', 'important');
+      modal.style.setProperty('visibility', 'visible', 'important');
+      modal.style.setProperty('pointer-events', 'auto', 'important');
+      modal.style.setProperty('z-index', '12000', 'important');
+      modal.classList.add('show');
+      modal.classList.add('open');
+      if (document.body) document.body.classList.add('modal-open');
     },
 
     promptTermsOnLogin() {
@@ -433,30 +439,40 @@
     checkNewInstallBackupOption() {
       const card = document.getElementById('newInstallBackupCard');
       if (!card) return;
-      // Show on new install / fresh state before any user logs in
-      const hasUserData = localStorage.getItem('paisa_user_installed_before') || localStorage.getItem('paisa_auth_token');
-      if (!hasUserData) {
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
+      // Always visible on login page so user can restore existing data at any time
+      card.style.display = 'block';
     },
 
     async applyImportedPayload(payload, sourcePathName = 'File', shouldReload = true) {
-      if (!payload.app || !payload.data) {
+      const dataObj = payload.data || payload;
+      if (!dataObj || typeof dataObj !== 'object') {
         throw new Error('Invalid PaisaTrack backup file structure');
       }
 
       let recordCount = 0;
-      Object.keys(payload.data).forEach(k => {
-        const val = payload.data[k];
-        if (typeof val === 'object') {
+      Object.keys(dataObj).forEach(k => {
+        if (['app', 'version', 'package_id', 'designated_path', 'download_path', 'exported_at', 'device'].includes(k) && payload.data) {
+          return;
+        }
+        const val = dataObj[k];
+        if (typeof val === 'object' && val !== null) {
           localStorage.setItem(k, JSON.stringify(val));
           if (Array.isArray(val)) recordCount += val.length;
+          else recordCount += Object.keys(val).length;
         } else if (val !== null && val !== undefined) {
           localStorage.setItem(k, String(val));
+          recordCount++;
         }
       });
+
+      const alertEl = document.getElementById('authRestoreStatusAlert');
+      if (alertEl) {
+        alertEl.style.display = 'block';
+        alertEl.style.background = 'rgba(16, 185, 129, 0.2)';
+        alertEl.style.borderColor = '#10b981';
+        alertEl.style.color = '#a7f3d0';
+        alertEl.textContent = `✅ Database restored from ${sourcePathName}! (${recordCount} records loaded)`;
+      }
 
       if (shouldReload) {
         if (window.showToast) {
@@ -470,12 +486,27 @@
 
     async importFromFileManager(file) {
       if (!file) return;
+      const alertEl = document.getElementById('authRestoreStatusAlert');
+      if (alertEl) {
+        alertEl.style.display = 'block';
+        alertEl.style.background = 'rgba(16, 185, 129, 0.15)';
+        alertEl.style.borderColor = '#10b981';
+        alertEl.style.color = '#a7f3d0';
+        alertEl.textContent = `⏳ Reading and validating ${file.name}...`;
+      }
       try {
         const text = await file.text();
         const payload = JSON.parse(text);
         await this.applyImportedPayload(payload, file.name);
       } catch (err) {
         console.error('Import from File Manager failed:', err);
+        if (alertEl) {
+          alertEl.style.display = 'block';
+          alertEl.style.background = 'rgba(239, 68, 68, 0.15)';
+          alertEl.style.borderColor = '#ef4444';
+          alertEl.style.color = '#fca5a5';
+          alertEl.textContent = `❌ Restore failed: ${err.message}`;
+        }
         if (window.showToast) {
           window.showToast('Restore failed: ' + err.message, 'error');
         }
