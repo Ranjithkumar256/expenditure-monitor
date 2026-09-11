@@ -208,7 +208,7 @@
     // 1. Header quick demo toggle button
     const quickBtn = document.getElementById('quickToggleDemoBtn');
     if (quickBtn) {
-      quickBtn.style.setProperty('display', isDemo ? 'flex' : 'none', 'important');
+      quickBtn.style.display = isDemo ? 'flex' : 'none';
     }
 
     // 2. Mobile drawer demo toggle button
@@ -277,7 +277,7 @@
 
     // 2. Reset User Display & Badges
     const quickBtn = document.getElementById('quickToggleDemoBtn');
-    if (quickBtn) quickBtn.style.setProperty('display', 'none', 'important');
+    if (quickBtn) quickBtn.style.display = 'none';
     const drawerBtn = document.getElementById('drawerToggleDemoBtn');
     if (drawerBtn) drawerBtn.style.setProperty('display', 'none', 'important');
     document.querySelectorAll('.demo-data-control-card').forEach(card => card.style.setProperty('display', 'none', 'important'));
@@ -3101,13 +3101,13 @@
       const demoCards = document.querySelectorAll('.demo-data-control-card');
 
       if (!isDemo) {
-        if (quickBtn) quickBtn.style.setProperty('display', 'none', 'important');
+        if (quickBtn) quickBtn.style.display = 'none';
         if (drawerBtn) drawerBtn.style.setProperty('display', 'none', 'important');
         demoCards.forEach(card => card.style.setProperty('display', 'none', 'important'));
         return;
       }
 
-      if (quickBtn) quickBtn.style.setProperty('display', 'flex', 'important');
+      if (quickBtn) quickBtn.style.display = 'flex';
       if (drawerBtn) drawerBtn.style.setProperty('display', 'flex', 'important');
       demoCards.forEach(card => card.style.setProperty('display', 'block', 'important'));
 

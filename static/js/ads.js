@@ -32,7 +32,7 @@
           bottom: 0;
           left: 0;
           right: 0;
-          z-index: 1000;
+          z-index: 990;
           background: rgba(9, 13, 22, 0.95);
           backdrop-filter: blur(12px);
           border-top: 1px solid rgba(255, 255, 255, 0.12);
@@ -40,9 +40,17 @@
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 6px 12px 10px;
+          padding: 6px 12px 6px;
           box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
-          transition: transform 0.3s ease;
+          transition: bottom 0.3s ease;
+        }
+
+        /* Lift Ad Banner ABOVE mobile bottom navigation bar */
+        @media (max-width: 875px) {
+          .admob-banner-container {
+            bottom: calc(var(--bottom-bar-height, 68px) + var(--safe-bottom, 0px)) !important;
+            padding: 4px 10px;
+          }
         }
         .admob-banner-content {
           max-width: 500px;
@@ -95,6 +103,15 @@
 
         body.has-admob-banner {
           padding-bottom: 72px !important;
+        }
+
+        @media (max-width: 875px) {
+          body.has-admob-banner {
+            padding-bottom: 0 !important;
+          }
+          body.has-admob-banner .content-body {
+            padding-bottom: calc(var(--bottom-bar-height, 68px) + var(--safe-bottom, 0px) + 68px) !important;
+          }
         }
 
         /* Interstitial Ad Overlay */
