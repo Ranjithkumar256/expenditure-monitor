@@ -48,8 +48,10 @@ if [ "$MODE" == "apk" ] || [ "$MODE" == "all" ]; then
         echo "⚠️ Gradle build failed. If Android SDK is not installed, install it via Android Studio or sdkmanager."
         exit 1
     }
+    cp app/build/outputs/apk/debug/PaisaTrack-debug.apk app/build/outputs/apk/debug/app-debug.apk 2>/dev/null || true
     echo "✅ Debug APK built successfully!"
-    echo "📍 File: android/app/build/outputs/apk/debug/app-debug.apk"
+    echo "📍 File: android/app/build/outputs/apk/debug/PaisaTrack-debug.apk"
+    echo "📍 Legacy: android/app/build/outputs/apk/debug/app-debug.apk"
 fi
 
 if [ "$MODE" == "aab" ] || [ "$MODE" == "all" ]; then
@@ -58,8 +60,10 @@ if [ "$MODE" == "aab" ] || [ "$MODE" == "all" ]; then
         echo "⚠️ Gradle build failed. If Android SDK is not installed, install it via Android Studio or sdkmanager."
         exit 1
     }
+    cp app/build/outputs/bundle/release/app-release.aab app/build/outputs/bundle/release/PaisaTrack-release.aab 2>/dev/null || true
     echo "✅ Signed Android App Bundle (.aab) created successfully!"
-    echo "📍 File: android/app/build/outputs/bundle/release/app-release.aab"
+    echo "📍 File: android/app/build/outputs/bundle/release/PaisaTrack-release.aab"
+    echo "📍 Legacy: android/app/build/outputs/bundle/release/app-release.aab"
 fi
 
 echo "========================================================"

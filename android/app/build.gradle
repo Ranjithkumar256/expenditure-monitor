@@ -33,6 +33,35 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            outputFileName = "PaisaTrack-${variant.name}.apk"
+        }
+    }
+}
+
+tasks.whenTaskAdded { task ->
+    if (task.name == 'bundleRelease') {
+        task.doLast {
+            copy {
+                from "${layout.buildDirectory.get().asFile}/outputs/bundle/release"
+                into "${layout.buildDirectory.get().asFile}/outputs/bundle/release"
+                include "app-release.aab"
+                rename "app-release.aab", "PaisaTrack-release.aab"
+            }
+        }
+    }
+    if (task.name == 'assembleDebug') {
+        task.doLast {
+            copy {
+                from "${layout.buildDirectory.get().asFile}/outputs/apk/debug"
+                into "${layout.buildDirectory.get().asFile}/outputs/apk/debug"
+                include "PaisaTrack-debug.apk"
+                rename "PaisaTrack-debug.apk", "app-debug.apk"
+            }
+        }
+    }
 }
 
 repositories {
