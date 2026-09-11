@@ -1049,22 +1049,32 @@
                 <span class="badge badge-emerald" style="font-size: 11px; padding: 4px 8px; flex-shrink: 0;">Survives Uninstall</span>
               </div>
 
-              <!-- Section 1: Phone File Manager Persistence -->
+              <!-- Section 1: Phone File Manager Persistence (Dedicated Android/data path) -->
               <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 14px; margin-top: 10px;">
-                <div style="font-size: 12.5px; font-weight: 700; color: #34d399; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                  <span>📁</span> Phone File Manager (Documents / Downloads)
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                  <div style="font-size: 12.5px; font-weight: 700; color: #34d399; display: flex; align-items: center; gap: 6px;">
+                    <span>📁</span> Dedicated Storage: Android/data/com.paisatrack.app/
+                  </div>
+                  <span class="badge badge-emerald" style="font-size: 10px;">App-Isolated Path</span>
+                </div>
+                <div style="background: rgba(0,0,0,0.25); border-radius: 6px; padding: 6px 10px; font-family: monospace; font-size: 11px; color: #a7f3d0; margin-bottom: 8px; word-break: break-all;">
+                  📍 Target Path: Internal Storage/Android/data/com.paisatrack.app/files/database_backup.json
                 </div>
                 <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0 0 10px 0; line-height: 1.4;">
-                  Save your database file directly to your phone's File Manager. Files in your phone's File Manager are <strong>never deleted on uninstall</strong>. You can inspect or modify the JSON file in any text editor and restore it anytime.
+                  Saves your database directly into this app's dedicated internal storage directory. Survives app uninstallation and can be restored or modified anytime. <em>(Zero access taken to any other directories or personal files).</em>
                 </p>
+                <div id="lastSavedFilePath" style="display: none; font-size: 11px; color: #38bdf8; margin-bottom: 8px; font-weight: 600;"></div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <button type="button" class="btn btn-sm btn-primary" id="btnExportFileManager" style="display: inline-flex; align-items: center; gap: 6px;">
-                    <span>💾</span> Save to File Manager (.json)
+                    <span>💾</span> Save to Android/data Directory
                   </button>
-                  <button type="button" class="btn btn-sm btn-secondary" id="btnImportFileManager" style="display: inline-flex; align-items: center; gap: 6px;">
-                    <span>📂</span> Restore / Modify from File Manager
+                  <button type="button" class="btn btn-sm btn-secondary" id="btnRestoreDirectFileManager" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span>🔄</span> Restore from Android/data
                   </button>
-                  <input type="file" id="inputImportFileManager" accept=".json" style="display: none;">
+                  <button type="button" class="btn btn-sm btn-outline" id="btnImportFileManager" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span>📂</span> Browse / Pick File
+                  </button>
+                  <input type="file" id="inputImportFileManager" accept=".json,application/json" style="display: none;">
                 </div>
               </div>
 
@@ -2610,10 +2620,16 @@
         <!-- 2. Phone File Manager Persistence (Anti-Uninstall Loss) -->
         <div class="terms-section-card mt-3">
           <div class="terms-section-title text-indigo">
-            <span>📁</span> File Manager Database Persistence
+            <span>📁</span> File Manager Database Persistence (Dedicated App Path)
           </div>
           <p class="terms-section-text">
-            To prevent accidental loss when uninstalling or changing phones, you can export your entire database directly to your phone's <strong>File Manager (Documents / Downloads)</strong>. Files in your phone's File Manager are <strong>never deleted on uninstall</strong>. You can modify your database in any editor and restore it anytime.
+            To prevent accidental loss when uninstalling or changing phones, you can export and persist your entire database directly to this app's dedicated storage directory:
+          </p>
+          <div style="background: rgba(0,0,0,0.25); border-radius: 6px; padding: 6px 10px; font-family: monospace; font-size: 11px; color: #a7f3d0; margin: 6px 0; word-break: break-all;">
+            📍 Internal Storage/Android/data/com.paisatrack.app/files/database_backup.json
+          </div>
+          <p class="terms-section-text" style="font-size: 11.5px; margin: 0;">
+            Files in this internal directory survive app uninstalls and can be inspected, edited, or restored across reinstalls.
           </p>
         </div>
 
@@ -2633,13 +2649,16 @@
             </p>
           </div>
 
-          <div class="permission-item mt-2">
+          <div class="permission-item mt-2" style="border-left-color: var(--emerald);">
             <div class="permission-item-head">
-              <strong>💾 File Storage & Manager Access</strong>
-              <span class="badge badge-emerald" style="font-size: 10px;">Required</span>
+              <strong>💾 File Storage & Manager Access (Dedicated App Directory Only)</strong>
+              <span class="badge badge-emerald" style="font-size: 10px;">Store & Restore Only</span>
             </div>
             <p class="permission-item-desc">
-              Allows saving database backups (`.json`) directly into your phone's File Manager and restoring your financial history seamlessly across re-installs.
+              <strong>Exclusive Purpose:</strong> Access is granted <strong>strictly and solely for storing (export) and restoring (import)</strong> your local database backup <code>.json</code> file inside <code>Internal Storage/Android/data/com.paisatrack.app/files/</code>.
+            </p>
+            <p class="permission-item-desc" style="color: #a7f3d0; margin-top: 4px;">
+              🛡️ <strong>Zero Access to Other Paths:</strong> We <strong>DO NOT scan, read, access, or touch ANY other directories, folders, photos, videos, contacts, or documents on your device</strong>. All storage operations are 100% isolated to this dedicated app directory.
             </p>
           </div>
 

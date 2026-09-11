@@ -81,12 +81,18 @@
     },
 
     // -------------------------------------------------------------
-    // 2. FILE MANAGER DATABASE EXPORT, MODIFY & RESTORE
+    // 2. DEDICATED FILE STORAGE & DATABASE PERSISTENCE (Android/data/)
     // -------------------------------------------------------------
+    APP_PACKAGE_ID: 'com.paisatrack.app',
+    APP_STORAGE_DIR: 'Android/data/com.paisatrack.app/files/',
+    BACKUP_FILENAME: 'database_backup.json',
+
     async gatherDatabasePayload() {
       let payload = {
         app: 'PaisaTrack',
         version: '1.2.0',
+        package_id: this.APP_PACKAGE_ID,
+        designated_path: `Internal Storage/${this.APP_STORAGE_DIR}${this.BACKUP_FILENAME}`,
         exported_at: new Date().toISOString(),
         device: navigator.userAgent,
         data: {}
@@ -133,21 +139,69 @@
       try {
         const payload = await this.gatherDatabasePayload();
         const jsonStr = JSON.stringify(payload, null, 2);
-        const dateStr = new Date().toISOString().slice(0, 10);
-        const fileName = `paisatrack_backup_${dateStr}.json`;
+        const fileName = this.BACKUP_FILENAME;
+        let savedPathDescription = '';
 
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // 1. Native Android Storage (Capacitor Filesystem in Android/data/com.paisatrack.app/files/)
+        const Filesystem = window.Capacitor?.Plugins?.Filesystem;
+        if (Filesystem) {
+          try {
+            await Filesystem.writeFile({
+              path: fileName,
+              data: jsonStr,
+              directory: 'EXTERNAL', // Resolves directly to /storage/emulated/0/Android/data/com.paisatrack.app/files/
+              encoding: 'utf8',
+              recursive: true
+            });
+            savedPathDescription = `Internal Storage/${this.APP_STORAGE_DIR}${fileName}`;
+          } catch (capErr) {
+            console.warn('Native Filesystem write error, falling back to web path:', capErr);
+          }
+        }
+
+        // 2. Web File System Access API (if available and not native)
+        if (!savedPathDescription && typeof window.showSaveFilePicker === 'function') {
+          try {
+            const handle = await window.showSaveFilePicker({
+              suggestedName: fileName,
+              types: [{
+                description: 'PaisaTrack JSON Database',
+                accept: { 'application/json': ['.json'] }
+              }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(jsonStr);
+            await writable.close();
+            savedPathDescription = `Selected Folder/${fileName}`;
+          } catch (pickerErr) {
+            if (pickerErr.name === 'AbortError') return;
+            console.warn('showSaveFilePicker fallback:', pickerErr);
+          }
+        }
+
+        // 3. Web standard download fallback
+        if (!savedPathDescription) {
+          const blob = new Blob([jsonStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          savedPathDescription = `Downloads/${fileName} (Designated: ${this.APP_STORAGE_DIR})`;
+        }
+
+        // Update UI status badge
+        const pathEl = document.getElementById('lastSavedFilePath');
+        if (pathEl) {
+          pathEl.textContent = `✅ Saved: ${savedPathDescription} (${new Date().toLocaleTimeString()})`;
+          pathEl.style.display = 'block';
+        }
 
         if (window.showToast) {
-          window.showToast('✅ Database saved to phone File Manager (Downloads)!', 'success');
+          window.showToast(`✅ Database saved to ${savedPathDescription}`, 'success');
         }
       } catch (err) {
         console.error('Export to File Manager failed:', err);
@@ -157,36 +211,60 @@
       }
     },
 
+    async restoreFromDesignatedPath() {
+      // 1. Direct restore from Android/data/com.paisatrack.app/files/database_backup.json
+      const Filesystem = window.Capacitor?.Plugins?.Filesystem;
+      if (Filesystem) {
+        try {
+          const res = await Filesystem.readFile({
+            path: this.BACKUP_FILENAME,
+            directory: 'EXTERNAL',
+            encoding: 'utf8'
+          });
+          if (res && res.data) {
+            const payload = JSON.parse(res.data);
+            return await this.applyImportedPayload(payload, `Internal Storage/${this.APP_STORAGE_DIR}${this.BACKUP_FILENAME}`);
+          }
+        } catch (capErr) {
+          console.log('No existing backup in Android/data directly, prompting file picker:', capErr);
+        }
+      }
+
+      // 2. If not found in native path or on web, open file picker
+      document.getElementById('inputImportFileManager')?.click();
+    },
+
+    async applyImportedPayload(payload, sourcePathName = 'File') {
+      if (!payload.app || !payload.data) {
+        throw new Error('Invalid PaisaTrack backup file structure');
+      }
+
+      let recordCount = 0;
+      Object.keys(payload.data).forEach(k => {
+        const val = payload.data[k];
+        if (typeof val === 'object') {
+          localStorage.setItem(k, JSON.stringify(val));
+          if (Array.isArray(val)) recordCount += val.length;
+        } else if (val !== null && val !== undefined) {
+          localStorage.setItem(k, String(val));
+        }
+      });
+
+      if (window.showToast) {
+        window.showToast(`✅ Database restored from ${sourcePathName}! (${recordCount} records loaded)`, 'success');
+      }
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    },
+
     async importFromFileManager(file) {
       if (!file) return;
       try {
         const text = await file.text();
         const payload = JSON.parse(text);
-
-        if (!payload.app || !payload.data) {
-          throw new Error('Invalid PaisaTrack backup file structure');
-        }
-
-        let recordCount = 0;
-        // Restore localStorage database keys
-        Object.keys(payload.data).forEach(k => {
-          const val = payload.data[k];
-          if (typeof val === 'object') {
-            localStorage.setItem(k, JSON.stringify(val));
-            if (Array.isArray(val)) recordCount += val.length;
-          } else if (val !== null && val !== undefined) {
-            localStorage.setItem(k, String(val));
-          }
-        });
-
-        if (window.showToast) {
-          window.showToast(`✅ Restored database from File Manager! (${recordCount} records loaded)`, 'success');
-        }
-
-        // Reload app data
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        await this.applyImportedPayload(payload, file.name);
       } catch (err) {
         console.error('Import from File Manager failed:', err);
         if (window.showToast) {
@@ -365,6 +443,10 @@
     // Event Bindings for File Manager Backup
     document.getElementById('btnExportFileManager')?.addEventListener('click', () => {
       BackupManager.exportToFileManager();
+    });
+
+    document.getElementById('btnRestoreDirectFileManager')?.addEventListener('click', () => {
+      BackupManager.restoreFromDesignatedPath();
     });
 
     const importInput = document.getElementById('inputImportFileManager');
