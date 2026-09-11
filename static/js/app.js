@@ -114,18 +114,22 @@
         throw new Error('Authentication required');
       }
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: 'Network error' }));
-        throw new Error(err.detail || 'Request failed');
+        const err = await res.json().catch(() => ({ detail: 'Request failed' }));
+        const error = new Error(err.detail || 'Request failed');
+        error.status = res.status;
+        throw error;
       }
       return await res.json();
     } catch (err) {
-      // Standalone On-Device Storage Fallback (Zero Server Mode)
+      // If the server explicitly responded with an HTTP error (e.g. 401 Unauthorized, 400 Bad Request, 403 Forbidden):
+      // DO NOT fallback to local DB! Re-throw the server error directly so the UI displays it!
+      if (err.status && err.status >= 400) {
+        throw err;
+      }
+
+      // Standalone On-Device Storage Fallback (Zero Server Mode / Network offline)
       if (window.PaisaLocalDB) {
-        try {
-          return await window.PaisaLocalDB.handleApi(endpoint, options);
-        } catch (localErr) {
-          console.warn('LocalDB fallback error:', localErr);
-        }
+        return await window.PaisaLocalDB.handleApi(endpoint, options);
       }
 
       if (err.message !== 'Authentication required') {
@@ -199,6 +203,26 @@
     if (!user) return;
     state.currentUser = user;
 
+    const isDemo = Boolean(user.is_demo || user.username === 'demo' || user.email === 'demo@paisatrack.com');
+
+    // 1. Header quick demo toggle button
+    const quickBtn = document.getElementById('quickToggleDemoBtn');
+    if (quickBtn) {
+      quickBtn.style.setProperty('display', isDemo ? 'flex' : 'none', 'important');
+    }
+
+    // 2. Mobile drawer demo toggle button
+    const drawerBtn = document.getElementById('drawerToggleDemoBtn');
+    if (drawerBtn) {
+      drawerBtn.style.setProperty('display', isDemo ? 'flex' : 'none', 'important');
+    }
+
+    // 3. Settings card: Dummy & Sample Data Control
+    const demoCards = document.querySelectorAll('.demo-data-control-card');
+    demoCards.forEach(card => {
+      card.style.setProperty('display', isDemo ? 'block' : 'none', 'important');
+    });
+
     const name = user.full_name || user.username || 'User';
     const initials = name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase() || 'U';
 
@@ -216,6 +240,11 @@
 
     const drawerEmail = document.getElementById('drawerUserEmail');
     if (drawerEmail) drawerEmail.textContent = user.email || `${user.username}@paisatrack.com`;
+
+    const userRoleTag = document.getElementById('userRoleTag');
+    if (userRoleTag) {
+      userRoleTag.textContent = isDemo ? 'Demo User' : 'Personal Account';
+    }
   }
 
   // ====================================================================
@@ -247,6 +276,12 @@
     state.currentTab = 'dashboard';
 
     // 2. Reset User Display & Badges
+    const quickBtn = document.getElementById('quickToggleDemoBtn');
+    if (quickBtn) quickBtn.style.setProperty('display', 'none', 'important');
+    const drawerBtn = document.getElementById('drawerToggleDemoBtn');
+    if (drawerBtn) drawerBtn.style.setProperty('display', 'none', 'important');
+    document.querySelectorAll('.demo-data-control-card').forEach(card => card.style.setProperty('display', 'none', 'important'));
+
     const userDisplay = document.getElementById('userDisplayName');
     if (userDisplay) userDisplay.textContent = 'User';
     const userInitials = document.getElementById('userAvatarInitials');
@@ -404,7 +439,9 @@
       hideAuthOverlay();
       showToast(`Welcome back, ${res.user.full_name || res.user.username}!`, 'success');
     } catch (err) {
-      showAuthOverlay(err.message || 'Login failed', false);
+      const errMsg = err.message || 'Incorrect username or password';
+      showAuthOverlay(errMsg, false);
+      showToast(errMsg, 'error');
     }
   }
 
@@ -439,7 +476,9 @@
       hideAuthOverlay();
       showToast(`Account created! Welcome to PaisaTrack.`, 'success');
     } catch (err) {
-      showAuthOverlay(err.message || 'Registration failed', false);
+      const errMsg = err.message || 'Registration failed';
+      showAuthOverlay(errMsg, false);
+      showToast(errMsg, 'error');
     }
   }
 
@@ -451,6 +490,7 @@
     localStorage.removeItem('paisatrack_active_profile_id');
     sessionStorage.clear();
     resetClientStateAndDOM();
+    switchAuthTab('signInTab');
     showAuthOverlay('You have been logged out successfully.', true);
     showToast('Signed out', 'info');
   }
@@ -1214,7 +1254,7 @@
     if (!tbody) return;
 
     if (!data.transactions || data.transactions.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted">No transactions found matching your criteria</td></tr>';
+      tbody.innerHTML = '<tr class="empty-state-row"><td colspan="8" class="text-center py-5 text-muted">No transactions found matching your criteria</td></tr>';
       return;
     }
 
@@ -3054,13 +3094,29 @@
   // ====================================================================
   async function checkDataStatus() {
     try {
+      const isDemo = Boolean(state.currentUser && (state.currentUser.is_demo || state.currentUser.username === 'demo' || state.currentUser.email === 'demo@paisatrack.com'));
+
+      const quickBtn = document.getElementById('quickToggleDemoBtn');
+      const drawerBtn = document.getElementById('drawerToggleDemoBtn');
+      const demoCards = document.querySelectorAll('.demo-data-control-card');
+
+      if (!isDemo) {
+        if (quickBtn) quickBtn.style.setProperty('display', 'none', 'important');
+        if (drawerBtn) drawerBtn.style.setProperty('display', 'none', 'important');
+        demoCards.forEach(card => card.style.setProperty('display', 'none', 'important'));
+        return;
+      }
+
+      if (quickBtn) quickBtn.style.setProperty('display', 'flex', 'important');
+      if (drawerBtn) drawerBtn.style.setProperty('display', 'flex', 'important');
+      demoCards.forEach(card => card.style.setProperty('display', 'block', 'important'));
+
       const status = await api('/api/data-status');
       state.hasDummyData = status.has_dummy_data;
 
       // Update Header Quick Button
       const quickIcon = document.getElementById('quickDemoIcon');
       const quickText = document.getElementById('quickDemoText');
-      const quickBtn = document.getElementById('quickToggleDemoBtn');
       if (quickIcon && quickText) {
         quickIcon.textContent = status.has_dummy_data ? '🗑️' : '✨';
         quickText.textContent = status.has_dummy_data ? 'Remove Dummy Data' : 'Add Dummy Data';

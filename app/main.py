@@ -172,6 +172,7 @@ def register(req: UserRegister):
 
         cursor.execute("SELECT id, username, email, full_name, created_at FROM users WHERE id = ?", (new_user_id,))
         user_row = dict(cursor.fetchone())
+        user_row["is_demo"] = bool(username_clean == "demo")
 
         return AuthResponse(
             token=token,
@@ -189,7 +190,7 @@ def login(req: UserLogin):
         cursor.execute("SELECT * FROM users WHERE username = ? OR email = ?", (ident, ident))
         user = cursor.fetchone()
         if not user or not verify_password(req.password, user["password_hash"], user["password_salt"]):
-            raise HTTPException(status_code=401, detail="Invalid username/email or password")
+            raise HTTPException(status_code=401, detail="Incorrect username or password")
 
         token = generate_session_token()
         cursor.execute("""
@@ -202,7 +203,8 @@ def login(req: UserLogin):
             "username": user["username"],
             "email": user["email"],
             "full_name": user["full_name"],
-            "created_at": user["created_at"]
+            "created_at": user["created_at"],
+            "is_demo": bool(user["username"] == "demo")
         }
 
         return AuthResponse(
@@ -220,7 +222,8 @@ def get_me(current_user: Dict[str, Any] = Depends(get_current_user)):
             "username": current_user["username"],
             "email": current_user["email"],
             "full_name": current_user["full_name"],
-            "created_at": current_user.get("created_at")
+            "created_at": current_user.get("created_at"),
+            "is_demo": bool(current_user["username"] == "demo")
         }
     }
 
@@ -1898,34 +1901,66 @@ def update_settings(settings_update: SettingsUpdate):
         return {"success": True, "message": "Settings updated successfully"}
 
 @app.post("/api/reset-demo")
-def reset_demo_data():
+def reset_demo_data(current_user: Dict[str, Any] = Depends(get_current_user)):
+    if current_user["username"] != "demo":
+        raise HTTPException(status_code=403, detail="Dummy data controls are only permitted for demo user")
     seed_database(force_reseed=True)
     return {"success": True, "message": "Sample dummy financial dataset loaded successfully! (Profiles, Cards, Accounts, Loans & Transactions restored)"}
 
 @app.post("/api/clear-demo")
-def remove_demo_data():
+def remove_demo_data(current_user: Dict[str, Any] = Depends(get_current_user)):
+    if current_user["username"] != "demo":
+        raise HTTPException(status_code=403, detail="Dummy data controls are only permitted for demo user")
     clear_dummy_data()
     return {"success": True, "message": "All dummy data removed successfully! You now have a clean slate with ₹0 balance."}
 
 @app.get("/api/data-status")
-def get_data_status():
+def get_data_status(authorization: Optional[str] = Header(None)):
+    is_demo = False
+    user_id = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split("Bearer ", 1)[1].strip()
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+            SELECT u.id, u.username FROM user_sessions s
+            JOIN users u ON s.user_id = u.id
+            WHERE s.token = ? AND s.expires_at > datetime('now')
+            """, (token,))
+            row = cursor.fetchone()
+            if row:
+                user_id = row["id"]
+                is_demo = bool(row["username"] == "demo")
+
+    if not is_demo:
+        return {
+            "has_dummy_data": False,
+            "is_demo": False,
+            "transaction_count": 0,
+            "account_count": 0,
+            "card_count": 0,
+            "loan_count": 0,
+            "debt_count": 0
+        }
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) as trans_count FROM transactions")
+        cursor.execute("SELECT COUNT(*) as trans_count FROM transactions WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = ?)", (user_id or 1,))
         tc = cursor.fetchone()["trans_count"]
-        cursor.execute("SELECT COUNT(*) as cards_count FROM cards")
+        cursor.execute("SELECT COUNT(*) as cards_count FROM cards WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = ?)", (user_id or 1,))
         cc = cursor.fetchone()["cards_count"]
-        cursor.execute("SELECT COUNT(*) as loans_count FROM loans")
+        cursor.execute("SELECT COUNT(*) as loans_count FROM loans WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = ?)", (user_id or 1,))
         lc = cursor.fetchone()["loans_count"]
-        cursor.execute("SELECT COUNT(*) as debts_count FROM borrows_lent")
+        cursor.execute("SELECT COUNT(*) as debts_count FROM borrows_lent WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = ?)", (user_id or 1,))
         dc = cursor.fetchone()["debts_count"]
-        cursor.execute("SELECT COUNT(*) as accounts_count FROM accounts")
+        cursor.execute("SELECT COUNT(*) as accounts_count FROM accounts WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = ?)", (user_id or 1,))
         ac = cursor.fetchone()["accounts_count"]
 
         # If transaction count > 2 or cards > 1 or loans > 0, it has demo data
         has_dummy = bool(tc > 2 or cc > 1 or lc > 0 or dc > 0)
         return {
             "has_dummy_data": has_dummy,
+            "is_demo": True,
             "transaction_count": tc,
             "account_count": ac,
             "card_count": cc,

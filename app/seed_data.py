@@ -16,23 +16,23 @@ def clear_dummy_data() -> None:
     init_db()
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        print("Clearing all dummy financial records...")
-        cursor.execute("DELETE FROM transactions")
-        cursor.execute("DELETE FROM accounts")
-        cursor.execute("DELETE FROM cards")
-        cursor.execute("DELETE FROM loans")
-        cursor.execute("DELETE FROM borrows_lent")
-        cursor.execute("DELETE FROM monthly_carryovers")
-        cursor.execute("DELETE FROM investments")
-        cursor.execute("DELETE FROM financial_goals")
-        cursor.execute("DELETE FROM salary_plans")
+        print("Clearing all dummy financial records for demo user...")
+        cursor.execute("DELETE FROM transactions WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM accounts WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM cards WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM loans WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM borrows_lent WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM monthly_carryovers WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM investments WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM financial_goals WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM salary_plans WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
 
         # Keep Profile 1
         cursor.execute("SELECT id FROM profiles WHERE id = 1")
         if not cursor.fetchone():
             cursor.execute("""
-            INSERT INTO profiles (id, name, description, color, icon, currency, is_default)
-            VALUES (1, 'Personal Finances', 'Personal household, salary, family expenses & savings', '#4f46e5', 'user', 'INR', 1)
+            INSERT INTO profiles (id, user_id, name, description, color, icon, currency, is_default)
+            VALUES (1, 1, 'Personal Finances', 'Personal household, salary, family expenses & savings', '#4f46e5', 'user', 'INR', 1)
             """)
 
         # Starter clean accounts with ₹0 balance
@@ -52,22 +52,22 @@ def seed_database(force_reseed: bool = False) -> None:
         cursor = conn.cursor()
 
         # Check if already seeded
-        cursor.execute("SELECT COUNT(*) as count FROM accounts")
+        cursor.execute("SELECT COUNT(*) as count FROM accounts WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
         if cursor.fetchone()["count"] > 0 and not force_reseed:
             print("Database already contains financial records. Skipping reseed.")
             return
 
-        print("Seeding fresh multi-profile financial records...")
+        print("Seeding fresh multi-profile financial records for demo user...")
 
-        cursor.execute("DELETE FROM transactions")
-        cursor.execute("DELETE FROM accounts")
-        cursor.execute("DELETE FROM cards")
-        cursor.execute("DELETE FROM loans")
-        cursor.execute("DELETE FROM borrows_lent")
-        cursor.execute("DELETE FROM monthly_carryovers")
-        cursor.execute("DELETE FROM investments")
-        cursor.execute("DELETE FROM salary_plans")
-        cursor.execute("DELETE FROM financial_goals")
+        cursor.execute("DELETE FROM transactions WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM accounts WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM cards WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM loans WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM borrows_lent WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM monthly_carryovers WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM investments WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM salary_plans WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
+        cursor.execute("DELETE FROM financial_goals WHERE profile_id IN (SELECT id FROM profiles WHERE user_id = 1)")
 
         # 0. Ensure 2 Profiles exist
         cursor.execute("SELECT id FROM profiles WHERE id = 1")

@@ -1,10 +1,12 @@
 /**
  * PaisaTrack - On-Device Storage & Local Offline Database Engine
  * Enables 100% Standalone, Zero-Server Operation with persistent LocalStorage.
+ * Strictly isolates demo user sample data from real registered user accounts.
  */
 
 (function () {
   const STORAGE_KEYS = {
+    USERS: 'paisa_local_users_store_v2',
     USER: 'paisa_local_user_v1',
     PROFILES: 'paisa_local_profiles_v1',
     ACCOUNTS: 'paisa_local_accounts_v1',
@@ -22,23 +24,147 @@
 
   const PaisaLocalDB = {
     init() {
+      // Ensure user store exists with default demo user
+      this.getUsersList();
+
+      // Ensure demo defaults exist under base keys
       if (!localStorage.getItem(STORAGE_KEYS.PROFILES)) {
         this.resetDefaults();
       }
     },
 
+    getCurrentUser() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.USER);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+
+    getUsersList() {
+      let users = [];
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.USERS);
+        if (raw) users = JSON.parse(raw);
+      } catch (e) {
+        users = [];
+      }
+      if (!Array.isArray(users)) users = [];
+
+      // Ensure default demo user exists
+      const demoExists = users.some(u => u.username === 'demo' || u.id === 1);
+      if (!demoExists) {
+        users.unshift({
+          id: 1,
+          username: 'demo',
+          email: 'demo@paisatrack.com',
+          full_name: 'Demo User',
+          password: 'demo123',
+          is_demo: true,
+          created_at: new Date().toISOString()
+        });
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+      }
+      return users;
+    },
+
+    getUserKey(baseKey) {
+      const user = this.getCurrentUser();
+      if (!user || user.is_demo || user.username === 'demo') {
+        return baseKey;
+      }
+      return `${baseKey}_u${user.id}`;
+    },
+
+    getItem(baseKey, defaultValue = null) {
+      const k = this.getUserKey(baseKey);
+      const val = localStorage.getItem(k);
+      if (val === null) return defaultValue;
+      try {
+        return JSON.parse(val);
+      } catch (e) {
+        return defaultValue;
+      }
+    },
+
+    setItem(baseKey, value) {
+      const k = this.getUserKey(baseKey);
+      localStorage.setItem(k, JSON.stringify(value));
+    },
+
+    getDefaultCategories() {
+      return [
+        { id: 1, name: 'Groceries & Supplies', icon: '🛒', type: 'expense', color: '#10b981', monthly_budget: 15000 },
+        { id: 2, name: 'Food & Dining', icon: '🍔', type: 'expense', color: '#f59e0b', monthly_budget: 8000 },
+        { id: 3, name: 'Fuel & Commute', icon: '⛽', type: 'expense', color: '#00b4d8', monthly_budget: 6000 },
+        { id: 4, name: 'Housing & Rent', icon: '🏠', type: 'expense', color: '#6366f1', monthly_budget: 25000 },
+        { id: 5, name: 'Utilities & Bills', icon: '💡', type: 'expense', color: '#8b5cf6', monthly_budget: 7500 },
+        { id: 6, name: 'Shopping & Clothes', icon: '🛍️', type: 'expense', color: '#ec4899', monthly_budget: 8000 },
+        { id: 7, name: 'Health & Medical', icon: '🩺', type: 'expense', color: '#ef4444', monthly_budget: 5000 },
+        { id: 8, name: 'Entertainment & OTT', icon: '🎬', type: 'expense', color: '#3b82f6', monthly_budget: 4000 },
+        { id: 9, name: 'Loan EMI & Interest', icon: '🏛️', type: 'expense', color: '#f97316', monthly_budget: 15000 },
+        { id: 10, name: 'Monthly Salary', icon: '💼', type: 'income', color: '#34d399', monthly_budget: 0 },
+        { id: 11, name: 'Freelance / Consulting', icon: '💻', type: 'income', color: '#38bdf8', monthly_budget: 0 },
+        { id: 12, name: 'Investment Returns', icon: '📈', type: 'income', color: '#a855f7', monthly_budget: 0 },
+        { id: 13, name: 'Other Income', icon: '➕', type: 'income', color: '#64748b', monthly_budget: 0 }
+      ];
+    },
+
+    ensureCleanUserData(userId) {
+      const userKey = (k) => `${k}_u${userId}`;
+      if (!localStorage.getItem(userKey(STORAGE_KEYS.PROFILES))) {
+        localStorage.setItem(userKey(STORAGE_KEYS.PROFILES), JSON.stringify([
+          { id: 1, name: 'Personal Finances', color: '#4f46e5', is_default: true, currency: 'INR' }
+        ]));
+        localStorage.setItem(userKey(STORAGE_KEYS.ACCOUNTS), JSON.stringify([
+          { id: 1, name: 'Primary Bank Account', account_type: 'Bank Account', balance: 0, profile_id: 1, color: '#004c8f' },
+          { id: 2, name: 'Cash Wallet', account_type: 'Cash Wallet', balance: 0, profile_id: 1, color: '#10b981' }
+        ]));
+        localStorage.setItem(userKey(STORAGE_KEYS.CATEGORIES), JSON.stringify(this.getDefaultCategories()));
+        localStorage.setItem(userKey(STORAGE_KEYS.SETTINGS), JSON.stringify({
+          base_currency: 'INR',
+          currency_symbol: '₹',
+          dark_mode: true,
+          smart_carryover: true,
+          monthly_budget: 0
+        }));
+        localStorage.setItem(userKey(STORAGE_KEYS.CARDS), JSON.stringify([]));
+        localStorage.setItem(userKey(STORAGE_KEYS.TRANSACTIONS), JSON.stringify([]));
+        localStorage.setItem(userKey(STORAGE_KEYS.LOANS), JSON.stringify([]));
+        localStorage.setItem(userKey(STORAGE_KEYS.BORROWS), JSON.stringify([]));
+        localStorage.setItem(userKey(STORAGE_KEYS.INVESTMENTS), JSON.stringify([]));
+        localStorage.setItem(userKey(STORAGE_KEYS.SALARY_PLAN), JSON.stringify({
+          monthly_salary: 0,
+          needs_target: 0,
+          wants_target: 0,
+          savings_target: 0,
+          health_score: 100
+        }));
+        localStorage.setItem(userKey(STORAGE_KEYS.GOALS), JSON.stringify([]));
+      }
+    },
+
+    clearDemoData() {
+      // Clears only demo records from base keys
+      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.CARDS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.LOANS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.BORROWS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.INVESTMENTS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify([
+        { id: 1, name: 'Primary Bank Account', account_type: 'Bank Account', balance: 0, profile_id: 1, color: '#004c8f' },
+        { id: 2, name: 'Cash Wallet', account_type: 'Cash Wallet', balance: 0, profile_id: 1, color: '#10b981' }
+      ]));
+    },
+
     resetDefaults() {
       const today = new Date().toISOString().split('T')[0];
 
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify({
-        id: 1,
-        name: 'PaisaTrack User',
-        email: 'user@paisatrack.local'
-      }));
-
       localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify([
-        { id: 1, name: 'Personal', color: '#10b981', is_default: true, currency: 'INR' },
-        { id: 2, name: 'Household', color: '#00b4d8', is_default: false, currency: 'INR' }
+        { id: 1, name: 'Personal Finances', color: '#10b981', is_default: true, currency: 'INR' },
+        { id: 2, name: 'Business & Consulting', color: '#00b4d8', is_default: false, currency: 'INR' }
       ]));
 
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify({
@@ -49,14 +175,7 @@
         monthly_budget: 65000
       }));
 
-      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify([
-        { id: 1, name: 'Groceries', icon: '🛒', type: 'expense', color: '#10b981', monthly_budget: 15000 },
-        { id: 2, name: 'Dining & Cafes', icon: '🍔', type: 'expense', color: '#f59e0b', monthly_budget: 8000 },
-        { id: 3, name: 'Fuel & Commute', icon: '⛽', type: 'expense', color: '#00b4d8', monthly_budget: 6000 },
-        { id: 4, name: 'Utilities & Bills', icon: '💡', type: 'expense', color: '#8b5cf6', monthly_budget: 7500 },
-        { id: 5, name: 'Monthly Salary', icon: '💼', type: 'income', color: '#34d399', monthly_budget: 0 },
-        { id: 6, name: 'Investment Returns', icon: '📈', type: 'income', color: '#38bdf8', monthly_budget: 0 }
-      ]));
+      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(this.getDefaultCategories()));
 
       localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify([
         { id: 1, name: 'HDFC Salary Account', account_type: 'Bank Account', balance: 64250, profile_id: 1, color: '#3b82f6' },
@@ -97,7 +216,7 @@
       ]));
 
       localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify([
-        { id: 1, title: 'Monthly Salary Credit', amount: 85000, type: 'income', category_id: 5, account_id: 1, date: today, note: 'Direct employer credit', profile_id: 1 },
+        { id: 1, title: 'Monthly Salary Credit', amount: 85000, type: 'income', category_id: 10, account_id: 1, date: today, note: 'Direct employer credit', profile_id: 1 },
         { id: 2, title: 'Supermarket Grocery Run', amount: 3450, type: 'expense', category_id: 1, account_id: 1, date: today, note: 'Pantry items', profile_id: 1 },
         { id: 3, title: 'Fuel Top-up', amount: 2200, type: 'expense', category_id: 3, account_id: 1, date: today, note: 'Petrol pump', profile_id: 1 },
         { id: 4, title: 'Weekend Family Dinner', amount: 1850, type: 'expense', category_id: 2, account_id: 1, date: today, note: 'Cafe dining', profile_id: 1 }
@@ -111,103 +230,235 @@
       try { if (options.body) body = JSON.parse(options.body); } catch (e) {}
 
       // 1. Auth & Profiles
-      if (endpoint === '/api/auth/me' || endpoint === '/api/auth/login' || endpoint === '/api/auth/register') {
-        const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || '{}');
-        return { user, token: 'paisa_ondevice_token_standalone' };
+      if (endpoint === '/api/auth/login') {
+        const ident = (body.username_or_email || body.username || body.email || '').trim().toLowerCase();
+        const pass = (body.password || '').trim();
+        if (!ident || !pass) {
+          throw new Error('Username and password are required');
+        }
+
+        const users = this.getUsersList();
+        const matched = users.find(u =>
+          (u.username && u.username.toLowerCase() === ident) ||
+          (u.email && u.email.toLowerCase() === ident)
+        );
+
+        if (!matched || matched.password !== pass) {
+          throw new Error('Incorrect username or password');
+        }
+
+        const isDemo = Boolean(matched.is_demo || matched.username === 'demo');
+        const safeUser = {
+          id: matched.id,
+          username: matched.username,
+          email: matched.email,
+          full_name: matched.full_name || matched.username,
+          is_demo: isDemo,
+          created_at: matched.created_at
+        };
+
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(safeUser));
+        localStorage.setItem('paisa_auth_token', 'paisa_local_token_' + safeUser.id);
+
+        if (!isDemo) {
+          this.ensureCleanUserData(safeUser.id);
+        }
+
+        return {
+          user: safeUser,
+          token: 'paisa_local_token_' + safeUser.id,
+          message: 'Logged in successfully'
+        };
       }
+
+      if (endpoint === '/api/auth/register') {
+        const username = (body.username || '').trim().toLowerCase();
+        const email = (body.email || `${username}@paisatrack.local`).trim().toLowerCase();
+        const fullName = (body.full_name || username).trim();
+        const pass = (body.password || '').trim();
+
+        if (!username || !pass) {
+          throw new Error('Username and password are required');
+        }
+        if (pass.length < 6) {
+          throw new Error('Password must be at least 6 characters long');
+        }
+
+        const users = this.getUsersList();
+        if (users.some(u => (u.username && u.username.toLowerCase() === username) || (u.email && u.email.toLowerCase() === email))) {
+          throw new Error('Username or email is already registered');
+        }
+
+        const newUser = {
+          id: Date.now(),
+          username,
+          email,
+          full_name: fullName,
+          password: pass,
+          is_demo: false,
+          created_at: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+        const safeUser = {
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          full_name: newUser.full_name,
+          is_demo: false,
+          created_at: newUser.created_at
+        };
+
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(safeUser));
+        localStorage.setItem('paisa_auth_token', 'paisa_local_token_' + safeUser.id);
+
+        // Initialize 100% clean data slate for this new real user
+        this.ensureCleanUserData(newUser.id);
+
+        return {
+          user: safeUser,
+          token: 'paisa_local_token_' + safeUser.id,
+          message: 'Registration successful'
+        };
+      }
+
+      if (endpoint === '/api/auth/me') {
+        const user = this.getCurrentUser();
+        if (!user) {
+          throw new Error('Authentication required');
+        }
+        return {
+          status: 'authenticated',
+          user: user
+        };
+      }
+
       if (endpoint === '/api/auth/logout') {
-        return { success: true };
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        localStorage.removeItem('paisa_auth_token');
+        return { success: true, message: 'Logged out successfully' };
       }
+
       if (endpoint.startsWith('/api/profiles')) {
-        const profiles = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROFILES) || '[]');
+        let profiles = this.getItem(STORAGE_KEYS.PROFILES, []);
         if (method === 'POST') {
           const newProfile = { id: Date.now(), name: body.name || 'New Profile', color: body.color || '#10b981', is_default: false, currency: 'INR' };
           profiles.push(newProfile);
-          localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(profiles));
+          this.setItem(STORAGE_KEYS.PROFILES, profiles);
           return newProfile;
         }
-        return profiles;
+        return { profiles: profiles };
       }
 
       // 2. Settings
       if (endpoint.startsWith('/api/settings')) {
-        let settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || '{}');
+        let settings = this.getItem(STORAGE_KEYS.SETTINGS, {
+          currency_code: 'INR',
+          currency_symbol: '₹',
+          currency_name: 'Indian Rupee',
+          theme: 'dark',
+          smart_carryover: true,
+          monthly_budget: 0
+        });
         if (method === 'POST' || method === 'PUT') {
           settings = { ...settings, ...body };
-          localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+          this.setItem(STORAGE_KEYS.SETTINGS, settings);
         }
-        return settings;
+        return {
+          settings: settings,
+          available_currencies: {
+            "INR": { "rate": 1.0, "symbol": "₹", "name": "Indian Rupee", "locale": "en-IN" },
+            "USD": { "rate": 0.012, "symbol": "$", "name": "US Dollar", "locale": "en-US" },
+            "EUR": { "rate": 0.011, "symbol": "€", "name": "Euro", "locale": "de-DE" },
+            "GBP": { "rate": 0.0095, "symbol": "£", "name": "British Pound", "locale": "en-GB" },
+            "AED": { "rate": 0.044, "symbol": "AED", "name": "UAE Dirham", "locale": "en-AE" },
+            "SGD": { "rate": 0.016, "symbol": "S$", "name": "Singapore Dollar", "locale": "en-SG" },
+            "CAD": { "rate": 0.016, "symbol": "C$", "name": "Canadian Dollar", "locale": "en-CA" },
+            "AUD": { "rate": 0.018, "symbol": "A$", "name": "Australian Dollar", "locale": "en-AU" }
+          }
+        };
       }
 
       // 3. Accounts
       if (endpoint === '/api/accounts') {
-        let accounts = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACCOUNTS) || '[]');
+        let accounts = this.getItem(STORAGE_KEYS.ACCOUNTS, []);
         if (method === 'POST') {
           const newAcc = { id: Date.now(), ...body, balance: parseFloat(body.balance) || 0 };
           accounts.push(newAcc);
-          localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
+          this.setItem(STORAGE_KEYS.ACCOUNTS, accounts);
           return newAcc;
         }
-        return accounts;
+        return { accounts: accounts };
       }
 
       // 4. Cards
       if (endpoint === '/api/cards') {
-        let cards = JSON.parse(localStorage.getItem(STORAGE_KEYS.CARDS) || '[]');
+        let cards = this.getItem(STORAGE_KEYS.CARDS, []);
         if (method === 'POST') {
           const newCard = { id: Date.now(), ...body, current_balance: parseFloat(body.current_balance) || 0 };
           cards.push(newCard);
-          localStorage.setItem(STORAGE_KEYS.CARDS, JSON.stringify(cards));
+          this.setItem(STORAGE_KEYS.CARDS, cards);
           return newCard;
         }
-        return cards;
+        return { cards: cards };
       }
 
       // 5. Categories
       if (endpoint === '/api/categories') {
-        let categories = JSON.parse(localStorage.getItem(STORAGE_KEYS.CATEGORIES) || '[]');
+        let categories = this.getItem(STORAGE_KEYS.CATEGORIES, []);
         if (method === 'POST') {
           const newCat = { id: Date.now(), ...body };
           categories.push(newCat);
-          localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+          this.setItem(STORAGE_KEYS.CATEGORIES, categories);
           return newCat;
         }
-        return categories;
+        return { categories: categories };
       }
 
       // 6. Loans & Borrows
       if (endpoint === '/api/loans') {
-        let loans = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOANS) || '[]');
+        let loans = this.getItem(STORAGE_KEYS.LOANS, []);
         if (method === 'POST') {
           const newLoan = { id: Date.now(), ...body };
           loans.push(newLoan);
-          localStorage.setItem(STORAGE_KEYS.LOANS, JSON.stringify(loans));
+          this.setItem(STORAGE_KEYS.LOANS, loans);
           return newLoan;
         }
-        return loans;
+        return { loans: loans };
       }
 
       if (endpoint === '/api/borrows') {
-        let borrows = JSON.parse(localStorage.getItem(STORAGE_KEYS.BORROWS) || '[]');
+        let borrows = this.getItem(STORAGE_KEYS.BORROWS, []);
         if (method === 'POST') {
           const newB = { id: Date.now(), ...body };
           borrows.push(newB);
-          localStorage.setItem(STORAGE_KEYS.BORROWS, JSON.stringify(borrows));
+          this.setItem(STORAGE_KEYS.BORROWS, borrows);
           return newB;
         }
-        return borrows;
+        const borrowed_list = borrows.filter(b => b.type === 'borrowed' || b.direction === 'borrowed');
+        const lent_list = borrows.filter(b => b.type === 'lent' || b.direction === 'lent');
+        const total_borrowed_remaining = borrowed_list.reduce((s, b) => s + (parseFloat(b.amount || b.balance_remaining) || 0), 0);
+        const total_lent_remaining = lent_list.reduce((s, b) => s + (parseFloat(b.amount || b.balance_remaining) || 0), 0);
+        return {
+          borrowed_list,
+          lent_list,
+          total_borrowed_remaining,
+          total_lent_remaining
+        };
       }
 
       if (endpoint === '/api/borrows/repay') {
-        let borrows = JSON.parse(localStorage.getItem(STORAGE_KEYS.BORROWS) || '[]');
+        let borrows = this.getItem(STORAGE_KEYS.BORROWS, []);
         borrows = borrows.map(b => b.id === body.id ? { ...b, status: 'settled' } : b);
-        localStorage.setItem(STORAGE_KEYS.BORROWS, JSON.stringify(borrows));
+        this.setItem(STORAGE_KEYS.BORROWS, borrows);
         return { success: true };
       }
 
       // 7. Transactions
       if (endpoint.startsWith('/api/transactions')) {
-        let txs = JSON.parse(localStorage.getItem(STORAGE_KEYS.TRANSACTIONS) || '[]');
+        let txs = this.getItem(STORAGE_KEYS.TRANSACTIONS, []);
         if (method === 'POST') {
           const newTx = {
             id: Date.now(),
@@ -220,7 +471,7 @@
             note: body.note || ''
           };
           txs.unshift(newTx);
-          localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(txs));
+          this.setItem(STORAGE_KEYS.TRANSACTIONS, txs);
 
           // Trigger Milestone Ad
           if (window.AdsManager) {
@@ -229,23 +480,35 @@
 
           return newTx;
         }
-        return txs;
+        let total_income = 0;
+        let total_expense = 0;
+        txs.forEach(t => {
+          if (t.type === 'income') total_income += (parseFloat(t.amount) || 0);
+          if (t.type === 'expense') total_expense += (parseFloat(t.amount) || 0);
+        });
+        return {
+          transactions: txs,
+          total_count: txs.length,
+          total_income,
+          total_expense,
+          net: total_income - total_expense
+        };
       }
 
       // 8. Investments
       if (endpoint === '/api/investments') {
-        let invs = JSON.parse(localStorage.getItem(STORAGE_KEYS.INVESTMENTS) || '[]');
+        let invs = this.getItem(STORAGE_KEYS.INVESTMENTS, []);
         if (method === 'POST') {
           const newInv = { id: Date.now(), ...body };
           invs.push(newInv);
-          localStorage.setItem(STORAGE_KEYS.INVESTMENTS, JSON.stringify(invs));
+          this.setItem(STORAGE_KEYS.INVESTMENTS, invs);
           return newInv;
         }
-        return invs;
+        return { investments: invs };
       }
 
       if (endpoint === '/api/investments/summary') {
-        const invs = JSON.parse(localStorage.getItem(STORAGE_KEYS.INVESTMENTS) || '[]');
+        const invs = this.getItem(STORAGE_KEYS.INVESTMENTS, []);
         const total_invested = invs.reduce((acc, i) => acc + (parseFloat(i.invested_amount) || 0), 0);
         const total_value = invs.reduce((acc, i) => acc + (parseFloat(i.current_value) || 0), 0);
         const total_gain = total_value - total_invested;
@@ -260,23 +523,29 @@
 
       // 9. Salary Plan & Goals
       if (endpoint === '/api/salary-plan') {
-        let plan = JSON.parse(localStorage.getItem(STORAGE_KEYS.SALARY_PLAN) || '{}');
+        let plan = this.getItem(STORAGE_KEYS.SALARY_PLAN, {
+          monthly_salary: 0,
+          needs_target: 0,
+          wants_target: 0,
+          savings_target: 0,
+          health_score: 100
+        });
         if (method === 'POST') {
           plan = { ...plan, ...body };
-          localStorage.setItem(STORAGE_KEYS.SALARY_PLAN, JSON.stringify(plan));
+          this.setItem(STORAGE_KEYS.SALARY_PLAN, plan);
         }
         return plan;
       }
 
       if (endpoint === '/api/financial-goals') {
-        let goals = JSON.parse(localStorage.getItem(STORAGE_KEYS.GOALS) || '[]');
+        let goals = this.getItem(STORAGE_KEYS.GOALS, []);
         if (method === 'POST') {
           const newGoal = { id: Date.now(), ...body };
           goals.push(newGoal);
-          localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goals));
+          this.setItem(STORAGE_KEYS.GOALS, goals);
           return newGoal;
         }
-        return goals;
+        return { goals: goals };
       }
 
       // 10. Transfers & Carryover
@@ -284,27 +553,124 @@
         return { success: true, message: 'Transfer completed locally.' };
       }
 
-      if (endpoint === '/api/carryover/history') {
+      if (endpoint.startsWith('/api/dashboard')) {
+        const txs = this.getItem(STORAGE_KEYS.TRANSACTIONS, []);
+        const accounts = this.getItem(STORAGE_KEYS.ACCOUNTS, []);
+        const invs = this.getItem(STORAGE_KEYS.INVESTMENTS, []);
+        const total_networth = accounts.reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0);
+        const portfolio_value = invs.reduce((sum, i) => sum + (parseFloat(i.current_value) || 0), 0);
+        let total_income = 0;
+        let total_expense = 0;
+        txs.forEach(t => {
+          if (t.type === 'income') total_income += (parseFloat(t.amount) || 0);
+          if (t.type === 'expense') total_expense += (parseFloat(t.amount) || 0);
+        });
+        const net_savings = total_income - total_expense;
+        const savings_rate_percent = total_income > 0 ? Math.round((net_savings / total_income) * 100) : 0;
+        const now = new Date();
+        const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+        return {
+          selected_period: {
+            year: now.getFullYear(),
+            month: now.getMonth() + 1,
+            month_name: monthNames[now.getMonth()]
+          },
+          total_networth,
+          true_net_worth: total_networth + portfolio_value,
+          portfolio_value,
+          carryover: {
+            total_income,
+            total_expense,
+            net_savings,
+            savings_rate_percent,
+            opening_balance: 0,
+            closing_balance: net_savings,
+            status: 'active'
+          },
+          categories_breakdown: [],
+          month_trends: [],
+          recent_transactions: txs.slice(0, 5),
+          investments_summary: { total_invested: 0, current_value: portfolio_value, total_gain: 0, returns_percentage: 0 },
+          salary_plan_analysis: { health_score: 85 }
+        };
+      }
+
+      if (endpoint.startsWith('/api/reports/month-wise')) {
+        return { months: [], incomes: [], expenses: [], savings: [], category_donut: [] };
+      }
+
+      if (endpoint.startsWith('/api/reports/day-wise')) {
+        return { days: [], expenses: [], incomes: [] };
+      }
+
+      if (endpoint.startsWith('/api/salary-plan/analysis')) {
+        return { health_score: 85, needs_spent: 0, wants_spent: 0, savings_spent: 0 };
+      }
+
+      if (endpoint.startsWith('/api/carryover/history')) {
         return [];
       }
 
-      if (endpoint === '/api/carryover/execute') {
+      if (endpoint.startsWith('/api/carryover/execute')) {
         return { success: true, message: 'Carryover calculated.' };
       }
 
+      if (endpoint.startsWith('/api/carryover')) {
+        return {
+          total_income: 0,
+          total_expense: 0,
+          net_savings: 0,
+          savings_rate_percent: 0,
+          opening_balance: 0,
+          closing_balance: 0,
+          status: 'active'
+        };
+      }
+
       if (endpoint === '/api/data-status') {
-        return { has_data: true, is_demo: false };
+        const user = this.getCurrentUser();
+        const isDemo = Boolean(user && (user.is_demo || user.username === 'demo'));
+        if (!isDemo) {
+          return {
+            has_dummy_data: false,
+            is_demo: false,
+            transaction_count: (this.getItem(STORAGE_KEYS.TRANSACTIONS, [])).length,
+            account_count: (this.getItem(STORAGE_KEYS.ACCOUNTS, [])).length,
+            card_count: (this.getItem(STORAGE_KEYS.CARDS, [])).length,
+            loan_count: (this.getItem(STORAGE_KEYS.LOANS, [])).length,
+            debt_count: (this.getItem(STORAGE_KEYS.BORROWS, [])).length
+          };
+        }
+        const txs = this.getItem(STORAGE_KEYS.TRANSACTIONS, []);
+        const cards = this.getItem(STORAGE_KEYS.CARDS, []);
+        return {
+          has_dummy_data: txs.length > 2 || cards.length > 1,
+          is_demo: true,
+          transaction_count: txs.length,
+          account_count: (this.getItem(STORAGE_KEYS.ACCOUNTS, [])).length,
+          card_count: cards.length,
+          loan_count: (this.getItem(STORAGE_KEYS.LOANS, [])).length,
+          debt_count: (this.getItem(STORAGE_KEYS.BORROWS, [])).length
+        };
       }
 
       if (endpoint === '/api/reset-demo') {
+        const user = this.getCurrentUser();
+        if (!user || (!user.is_demo && user.username !== 'demo')) {
+          throw new Error('Dummy data controls are only permitted for demo user');
+        }
         this.resetDefaults();
-        return { success: true };
+        return { success: true, message: 'Sample dummy data restored!' };
       }
 
       if (endpoint === '/api/clear-demo') {
-        localStorage.clear();
-        this.init();
-        return { success: true };
+        const user = this.getCurrentUser();
+        if (!user || (!user.is_demo && user.username !== 'demo')) {
+          throw new Error('Dummy data controls are only permitted for demo user');
+        }
+        this.clearDemoData();
+        return { success: true, message: 'Sample dummy data removed!' };
       }
 
       // Fallback response

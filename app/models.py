@@ -28,6 +28,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     created_at: Optional[str] = None
+    is_demo: bool = False
 
 class AuthResponse(BaseModel):
     token: str

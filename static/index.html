@@ -176,7 +176,7 @@
               </button>
             </div>
 
-            <button class="btn btn-sm btn-secondary w-100" id="drawerToggleDemoBtn" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border-radius: 8px; padding: 8px 12px; margin-top: 10px;">
+            <button class="btn btn-sm btn-secondary w-100" id="drawerToggleDemoBtn" style="display: none; align-items: center; justify-content: center; gap: 8px; width: 100%; border-radius: 8px; padding: 8px 12px; margin-top: 10px;">
               <span id="drawerDemoIcon">🗑️</span>
               <span id="drawerDemoText" style="font-weight: 600;">Remove Dummy Data</span>
             </button>
@@ -243,8 +243,8 @@
             </select>
           </div>
 
-          <!-- Quick Action Demo Data Button -->
-          <button class="btn btn-sm btn-secondary header-action-btn" id="quickToggleDemoBtn" title="Toggle Demo / Dummy Data" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: 1px solid rgba(255,255,255,0.18);">
+          <!-- Quick Action Demo Data Button (Visible ONLY for Demo User) -->
+          <button class="btn btn-sm btn-secondary header-action-btn" id="quickToggleDemoBtn" title="Toggle Demo / Dummy Data" style="display: none; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: 1px solid rgba(255,255,255,0.18);">
             <span id="quickDemoIcon">🗑️</span>
             <span id="quickDemoText" class="d-none d-md-inline">Remove Dummy Data</span>
           </button>
@@ -1039,8 +1039,8 @@
               </div>
             </div>
 
-            <!-- 5. Dummy & Sample Data Control Center -->
-            <div class="content-card settings-card settings-segment-data demo-data-control-card">
+            <!-- 5. Dummy & Sample Data Control Center (Visible ONLY for Demo User) -->
+            <div class="content-card settings-card settings-segment-data demo-data-control-card" style="display: none;">
               <div class="card-header-flex settings-header-flex">
                 <div class="settings-header-title">
                   <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
