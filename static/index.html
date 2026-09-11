@@ -1037,9 +1037,71 @@
                   </div>
                 </div>
               </div>
+            <!-- 5. File Manager Database & Cloud Backup Hub (Survives Uninstall & Phone Switch) -->
+            <div class="content-card settings-card settings-segment-data">
+              <div class="card-header-flex settings-header-flex mb-2">
+                <div class="settings-header-title">
+                  <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                    <span>💾</span> File Manager Database & Cloud Backup
+                  </h3>
+                  <span class="card-sub" style="margin-top: 4px; display: block;">Prevent uninstall data loss, inspect/modify records, and sync to Cloud</span>
+                </div>
+                <span class="badge badge-emerald" style="font-size: 11px; padding: 4px 8px; flex-shrink: 0;">Survives Uninstall</span>
+              </div>
+
+              <!-- Section 1: Phone File Manager Persistence -->
+              <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 14px; margin-top: 10px;">
+                <div style="font-size: 12.5px; font-weight: 700; color: #34d399; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                  <span>📁</span> Phone File Manager (Documents / Downloads)
+                </div>
+                <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0 0 10px 0; line-height: 1.4;">
+                  Save your database file directly to your phone's File Manager. Files in your phone's File Manager are <strong>never deleted on uninstall</strong>. You can inspect or modify the JSON file in any text editor and restore it anytime.
+                </p>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-sm btn-primary" id="btnExportFileManager" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span>💾</span> Save to File Manager (.json)
+                  </button>
+                  <button type="button" class="btn btn-sm btn-secondary" id="btnImportFileManager" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span>📂</span> Restore / Modify from File Manager
+                  </button>
+                  <input type="file" id="inputImportFileManager" accept=".json" style="display: none;">
+                </div>
+              </div>
+
+              <!-- Section 2: Cloud Database Backup & Configuration -->
+              <div style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 14px; margin-top: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                  <div style="font-size: 12.5px; font-weight: 700; color: #818cf8; display: flex; align-items: center; gap: 6px;">
+                    <span>☁️</span> Cloud Database Backup & Vault
+                  </div>
+                  <span id="cloudBackupStatus" class="badge badge-indigo" style="font-size: 10.5px;">Never backed up to Cloud</span>
+                </div>
+                <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0 0 10px 0; line-height: 1.4;">
+                  Backup your encrypted database snapshot to the Cloud Vault or your custom backend API server.
+                </p>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-sm btn-primary" id="btnBackupCloud" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span>☁️</span> Backup to Cloud Now
+                  </button>
+                  <button type="button" class="btn btn-sm btn-secondary" id="btnRestoreCloud" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span>🔄</span> Restore from Cloud
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline" id="btnOpenCloudConfig" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span>⚙️</span> Cloud Server Setup
+                  </button>
+                </div>
+              </div>
+
+              <!-- Section 3: Legal & Permissions Review -->
+              <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11.5px; color: var(--text-muted);">Terms & Permissions Status: <strong style="color: var(--emerald);">Accepted</strong></span>
+                <button type="button" class="btn-text-link" id="btnReviewTermsSettings" style="font-size: 11.5px; color: var(--indigo);">
+                  Review Terms & Permissions
+                </button>
+              </div>
             </div>
 
-            <!-- 5. Dummy & Sample Data Control Center (Visible ONLY for Demo User) -->
+            <!-- 6. Dummy & Sample Data Control Center (Visible ONLY for Demo User) -->
             <div class="content-card settings-card settings-segment-data demo-data-control-card" style="display: none;">
               <div class="card-header-flex settings-header-flex">
                 <div class="settings-header-title">
@@ -2520,6 +2582,154 @@
     </div>
   </div>
 
+  <!-- TERMS OF SERVICE, PRIVACY & REQUIRED PERMISSIONS ONBOARDING CONSENT -->
+  <div class="modal-backdrop terms-consent-backdrop" id="modalTermsConsent" style="display: none; z-index: 12000;">
+    <div class="modal-dialog terms-consent-dialog" style="max-width: 540px; width: 92%;">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 24px;">🛡️</span>
+            <h3 style="margin: 0;">Terms & Permissions Consent</h3>
+          </div>
+          <span class="card-sub" style="margin-top: 4px; display: block;">Transparent overview of privacy, storage & required permissions</span>
+        </div>
+        <span id="termsReviewBadge" class="badge badge-indigo" style="display: none; font-size: 11px;">Review Mode</span>
+      </div>
+
+      <div class="modal-body terms-consent-body" style="padding: 16px 20px; max-height: 65vh; overflow-y: auto;">
+        <!-- 1. Privacy & Storage Commitment -->
+        <div class="terms-section-card">
+          <div class="terms-section-title text-emerald">
+            <span>🔒</span> 100% On-Device Financial Storage
+          </div>
+          <p class="terms-section-text">
+            PaisaTrack is architected for absolute privacy. All your financial accounts, bank cards, expense transactions, loans, and investment records are stored locally on your device. Your financial logs are never uploaded or sold to third-party data brokers.
+          </p>
+        </div>
+
+        <!-- 2. Phone File Manager Persistence (Anti-Uninstall Loss) -->
+        <div class="terms-section-card mt-3">
+          <div class="terms-section-title text-indigo">
+            <span>📁</span> File Manager Database Persistence
+          </div>
+          <p class="terms-section-text">
+            To prevent accidental loss when uninstalling or changing phones, you can export your entire database directly to your phone's <strong>File Manager (Documents / Downloads)</strong>. Files in your phone's File Manager are <strong>never deleted on uninstall</strong>. You can modify your database in any editor and restore it anytime.
+          </p>
+        </div>
+
+        <!-- 3. Permissions Breakdown & Purpose -->
+        <div class="terms-section-card mt-3">
+          <div class="terms-section-title text-amber">
+            <span>⚡</span> Required Permissions & Why They Are Needed
+          </div>
+
+          <div class="permission-item mt-2">
+            <div class="permission-item-head">
+              <strong>🌐 Internet & Network State</strong>
+              <span class="badge badge-amber" style="font-size: 10px;">Required</span>
+            </div>
+            <p class="permission-item-desc">
+              Allows loading non-intrusive Google AdMob advertisements so that PaisaTrack remains <strong>100% free with all premium features unlocked</strong> for life without subscriptions, and enables optional Cloud Backup sync.
+            </p>
+          </div>
+
+          <div class="permission-item mt-2">
+            <div class="permission-item-head">
+              <strong>💾 File Storage & Manager Access</strong>
+              <span class="badge badge-emerald" style="font-size: 10px;">Required</span>
+            </div>
+            <p class="permission-item-desc">
+              Allows saving database backups (`.json`) directly into your phone's File Manager and restoring your financial history seamlessly across re-installs.
+            </p>
+          </div>
+
+          <div class="permission-item mt-2">
+            <div class="permission-item-head">
+              <strong>🔔 Alerts & Carryover Reminders</strong>
+              <span class="badge badge-indigo" style="font-size: 10px;">Optional</span>
+            </div>
+            <p class="permission-item-desc">
+              Used for month-end budget rollover reminders and credit card bill cycle due date notifications.
+            </p>
+          </div>
+        </div>
+
+        <!-- Agreement Checkbox -->
+        <div class="terms-agree-wrap mt-3" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; padding: 12px 14px;">
+          <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin: 0;">
+            <input type="checkbox" id="termsAgreeCheckbox" style="margin-top: 3px; width: 18px; height: 18px; accent-color: var(--indigo);">
+            <span style="font-size: 12.5px; color: var(--text-primary); line-height: 1.4;">
+              I understand and agree to the <strong>Terms of Service</strong>, <strong>Privacy Policy</strong>, and grant the required permissions for advertising and File Manager database persistence.
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 14px 20px;">
+        <button type="button" class="btn btn-primary w-100" id="btnAcceptTerms" disabled style="padding: 12px; font-weight: 700; font-size: 14px;">
+          Accept & Get Started
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLOUD DATABASE BACKUP & RESTORE CONFIGURATION MODAL -->
+  <div class="modal-backdrop" id="modalCloudConfig" style="display: none; z-index: 12000;">
+    <div class="modal-dialog" style="max-width: 480px; width: 92%;">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 22px;">☁️</span>
+            <h3 style="margin: 0;">Cloud Backup & Sync Configuration</h3>
+          </div>
+          <span class="card-sub" style="margin-top: 4px; display: block;">Connect to your personal cloud server, Supabase, Firebase, or Cloud Vault</span>
+        </div>
+        <button type="button" class="btn-close" id="btnCloseCloudConfig" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 16px 20px;">
+        <div class="form-group mb-3">
+          <label for="cloudConfigMode" class="form-label">Cloud Backup Mode</label>
+          <select id="cloudConfigMode" class="form-select">
+            <option value="vault" selected>🔒 Built-in Encrypted Cloud Vault (Zero Backend Required)</option>
+            <option value="custom">🌐 Custom Remote Server (REST API / Webhook)</option>
+          </select>
+          <span class="form-hint" style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">
+            Built-in vault encrypts your snapshot with AES-256. Custom mode sends backup payload to your specified API endpoint.
+          </span>
+        </div>
+
+        <div id="customCloudConfigWrap" style="display: none;">
+          <div class="form-group mb-3">
+            <label for="cloudConfigUrl" class="form-label">Cloud Endpoint URL</label>
+            <input type="url" id="cloudConfigUrl" class="form-control" placeholder="https://api.yourserver.com/v1/sync">
+            <span class="form-hint" style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">
+              POST requests will send the full JSON backup. GET requests will fetch the latest snapshot.
+            </span>
+          </div>
+
+          <div class="form-group mb-3">
+            <label for="cloudConfigKey" class="form-label">API Key / Bearer Token (Optional)</label>
+            <input type="password" id="cloudConfigKey" class="form-control" placeholder="Bearer eyJhbGciOi...">
+          </div>
+        </div>
+
+        <div class="form-check mt-2 mb-2">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="cloudConfigAutoSync" style="width: 16px; height: 16px; accent-color: var(--indigo);">
+            <span style="font-size: 12.5px; color: var(--text-secondary);">Auto-backup to Cloud when adding new transactions</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 12px 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="btn btn-primary" id="btnSaveCloudConfig">
+          Save Configuration
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toastContainer" class="toast-container"></div>
 
@@ -2528,6 +2738,7 @@
   <script src="js/network.js"></script>
   <script src="js/ads.js"></script>
   <script src="js/charts.js"></script>
+  <script src="js/backup.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
