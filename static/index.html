@@ -1055,13 +1055,16 @@
                   <div style="font-size: 12.5px; font-weight: 700; color: #34d399; display: flex; align-items: center; gap: 6px;">
                     <span>📁</span> Dedicated Storage: Android/data/com.paisatrack.app/
                   </div>
-                  <span class="badge badge-emerald" style="font-size: 10px;">App-Isolated Path</span>
+                  <div style="display: flex; gap: 6px; align-items: center;">
+                    <span class="badge badge-emerald" style="font-size: 10px;">⚡ Auto-Save Active</span>
+                    <span class="badge badge-indigo" style="font-size: 10px;">App-Isolated Path</span>
+                  </div>
                 </div>
                 <div style="background: rgba(0,0,0,0.25); border-radius: 6px; padding: 6px 10px; font-family: monospace; font-size: 11px; color: #a7f3d0; margin-bottom: 8px; word-break: break-all;">
                   📍 Target Path: Internal Storage/Android/data/com.paisatrack.app/files/database_backup.json
                 </div>
                 <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0 0 10px 0; line-height: 1.4;">
-                  Saves your database directly into this app's dedicated internal storage directory. Survives app uninstallation and can be restored or modified anytime. <em>(Zero access taken to any other directories or personal files).</em>
+                  ⚡ <strong>Automatic Sync Active:</strong> Whenever you add or edit transactions, accounts, or budgets, your database automatically syncs to <code>database_backup.json</code> in the background without needing to click backup every time. <em>(Zero access taken to other directories or personal files).</em>
                 </p>
                 <div id="lastSavedFilePath" style="display: none; font-size: 11px; color: #38bdf8; margin-bottom: 8px; font-weight: 600;"></div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -2722,9 +2725,14 @@
           <div class="form-group mb-3">
             <label for="cloudConfigUrl" class="form-label">Cloud Endpoint URL</label>
             <input type="url" id="cloudConfigUrl" class="form-control" placeholder="https://api.yourserver.com/v1/sync">
-            <span class="form-hint" style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">
-              POST requests will send the full JSON backup. GET requests will fetch the latest snapshot.
-            </span>
+            <div style="margin-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+              <span class="form-hint" style="font-size: 11px; color: var(--text-muted); margin: 0;">
+                POST saves backup; GET restores snapshot.
+              </span>
+              <button type="button" class="btn btn-sm btn-outline" id="btnUseCurrentServerUrl" style="font-size: 10.5px; padding: 3px 8px; border-radius: 4px;">
+                🔗 Use Current Server
+              </button>
+            </div>
           </div>
 
           <div class="form-group mb-3">

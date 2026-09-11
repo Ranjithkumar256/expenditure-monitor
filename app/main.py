@@ -2267,6 +2267,59 @@ def serve_sw():
         return FileResponse(sw_path, media_type="application/javascript")
     raise HTTPException(status_code=404)
 
+# ==============================================================================
+# CLOUD DATABASE BACKUP & RESTORE REST API
+# ==============================================================================
+@app.post("/api/cloud-backup")
+async def save_cloud_backup(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Saves encrypted or raw database backup JSON payload to cloud storage.
+    Scoped to the authenticated user ID.
+    """
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    backup_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "cloud_backups")
+    os.makedirs(backup_dir, exist_ok=True)
+    user_id = current_user.get("id", 1)
+    backup_file = os.path.join(backup_dir, f"backup_user_{user_id}.json")
+
+    import json
+    with open(backup_file, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+
+    return {
+        "status": "ok",
+        "message": "Cloud backup saved successfully",
+        "user_id": user_id,
+        "saved_at": datetime.utcnow().isoformat(),
+        "package_id": payload.get("package_id", "com.paisatrack.app"),
+        "keys_count": len(payload.get("data", {}))
+    }
+
+@app.get("/api/cloud-backup")
+async def get_cloud_backup(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Retrieves the latest cloud database backup JSON payload for the authenticated user.
+    """
+    backup_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "cloud_backups")
+    user_id = current_user.get("id", 1)
+    backup_file = os.path.join(backup_dir, f"backup_user_{user_id}.json")
+
+    if not os.path.exists(backup_file):
+        raise HTTPException(status_code=404, detail="No cloud backup found on server for this user")
+
+    import json
+    with open(backup_file, "r", encoding="utf-8") as f:
+        return json.load(f)
+
 @app.get("/privacy.html")
 def serve_privacy():
     privacy_path = os.path.join(static_dir, "privacy.html")
