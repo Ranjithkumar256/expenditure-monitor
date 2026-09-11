@@ -443,12 +443,104 @@
       card.style.display = 'block';
     },
 
-    async applyImportedPayload(payload, sourcePathName = 'File', shouldReload = true) {
-      const dataObj = payload.data || payload;
-      if (!dataObj || typeof dataObj !== 'object') {
-        throw new Error('Invalid PaisaTrack backup file structure');
+    validateDatabaseStructure(payload) {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        return { valid: false, error: 'File is not a valid JSON database object.' };
       }
 
+      // 1. Signature Check: If application identifier is declared, it must match PaisaTrack
+      if (payload.app && payload.app !== 'PaisaTrack') {
+        return { 
+          valid: false, 
+          error: `Application signature mismatch: Found "${payload.app}", but PaisaTrack requires a PaisaTrack database backup.` 
+        };
+      }
+
+      const dataObj = payload.data || payload;
+      if (!dataObj || typeof dataObj !== 'object' || Array.isArray(dataObj)) {
+        return { valid: false, error: 'Database payload contains no valid data table container.' };
+      }
+
+      const keys = Object.keys(dataObj);
+      if (keys.length === 0) {
+        return { valid: false, error: 'Database file is empty. Total DB structure match failed.' };
+      }
+
+      // 2. Reject foreign app schemas (e.g. Daily Health Coach with dhc_ keys)
+      const hasDhcKeys = keys.some(k => k.startsWith('dhc_'));
+      const hasPaisaKeys = keys.some(k => k.startsWith('paisa_') || k.startsWith('paisatrack_'));
+      if (hasDhcKeys && !hasPaisaKeys) {
+        return { 
+          valid: false, 
+          error: 'Daily Health Coach database detected. Cannot restore into PaisaTrack.' 
+        };
+      }
+
+      // 3. Schema Structure Check: Must contain core financial tables/keys
+      const recognizedPaisaKeys = [
+        'paisa_local_users_store_v2',
+        'paisa_local_user_v1',
+        'paisa_local_profiles_v1',
+        'paisa_local_accounts_v1',
+        'paisa_local_cards_v1',
+        'paisa_local_categories_v1',
+        'paisa_local_txs_v1',
+        'paisa_local_loans_v1',
+        'paisa_local_borrows_v1',
+        'paisa_local_investments_v1',
+        'paisa_local_salary_plan_v1',
+        'paisa_local_goals_v1',
+        'paisa_local_settings_v1',
+        'paisa_local_carryover_v1',
+        'paisa_auth_token',
+        'paisa_user_installed_before'
+      ];
+
+      const matchedKeys = keys.filter(k => 
+        recognizedPaisaKeys.includes(k) || 
+        k.startsWith('paisa_') || 
+        k.startsWith('paisatrack_')
+      );
+
+      if (matchedKeys.length === 0) {
+        return { 
+          valid: false, 
+          error: 'Total DB structure mismatch: No valid PaisaTrack database tables found (e.g. accounts, transactions, profiles).' 
+        };
+      }
+
+      // 4. Data Type & Schema Validation on key tables
+      if (dataObj.paisa_local_accounts_v1 !== undefined && !Array.isArray(dataObj.paisa_local_accounts_v1)) {
+        return { valid: false, error: 'Corrupted database schema: "paisa_local_accounts_v1" must be an array table.' };
+      }
+      if (dataObj.paisa_local_txs_v1 !== undefined && !Array.isArray(dataObj.paisa_local_txs_v1)) {
+        return { valid: false, error: 'Corrupted database schema: "paisa_local_txs_v1" must be an array table.' };
+      }
+      if (dataObj.paisa_local_users_store_v2 !== undefined && (typeof dataObj.paisa_local_users_store_v2 !== 'object' || dataObj.paisa_local_users_store_v2 === null)) {
+        return { valid: false, error: 'Corrupted database schema: "paisa_local_users_store_v2" must be an object store.' };
+      }
+
+      return { valid: true, matchedCount: matchedKeys.length };
+    },
+
+    async applyImportedPayload(payload, sourcePathName = 'File', shouldReload = true) {
+      // STRICT TOTAL DB STRUCTURE VALIDATION
+      const validation = this.validateDatabaseStructure(payload);
+      if (!validation.valid) {
+        const errorMsg = `❌ Database structure mismatch: ${validation.error} Restore cancelled.`;
+        const alertEl = document.getElementById('authRestoreStatusAlert');
+        if (alertEl) {
+          alertEl.style.display = 'block';
+          alertEl.style.background = 'rgba(239, 68, 68, 0.15)';
+          alertEl.style.borderColor = '#ef4444';
+          alertEl.style.color = '#fca5a5';
+          alertEl.textContent = errorMsg;
+        }
+        if (window.showToast) window.showToast(errorMsg, 'error');
+        throw new Error(validation.error);
+      }
+
+      const dataObj = payload.data || payload;
       let recordCount = 0;
       Object.keys(dataObj).forEach(k => {
         if (['app', 'version', 'package_id', 'designated_path', 'download_path', 'exported_at', 'device'].includes(k) && payload.data) {
@@ -602,6 +694,11 @@
         }
 
         if (!payload || !payload.data) throw new Error('Invalid Cloud backup snapshot');
+
+        const validation = this.validateDatabaseStructure(payload);
+        if (!validation.valid) {
+          throw new Error(`Total DB structure mismatch: ${validation.error}`);
+        }
 
         // Restore data
         Object.keys(payload.data).forEach(k => {
