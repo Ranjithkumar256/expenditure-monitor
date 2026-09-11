@@ -4162,7 +4162,14 @@ html, body {
   margin: 0;
 }
 
+@keyframes termsShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
 
-
-
-
+.terms-agree-error {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.14) !important;
+  animation: termsShake 0.4s ease;
+}

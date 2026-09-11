@@ -494,6 +494,7 @@
     showAuthOverlay('You have been logged out successfully.', true);
     showToast('Signed out', 'info');
   }
+  window.handleLogout = handleLogout;
 
   async function loadAppData() {
     // 1. Load Profiles & Active Workspace first so state.activeProfileId is strictly for current user

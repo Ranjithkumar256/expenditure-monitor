@@ -2676,20 +2676,40 @@
           </div>
         </div>
 
-        <!-- Agreement Checkbox -->
-        <div class="terms-agree-wrap mt-3" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; padding: 12px 14px;">
+        <!-- Agreement Validation Alert (Shown when user clicks submit without checking) -->
+        <div id="termsAgreeErrorAlert" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 10px 14px; color: #fca5a5; font-size: 12.5px; margin-top: 14px; line-height: 1.45;">
+          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700;">
+            <span>⚠️</span> Please check this box to proceed
+          </div>
+          <p style="margin: 4px 0 0 0; font-size: 11.5px; color: #fecaca;">
+            You must agree to the Terms of Service & Required Permissions before continuing. If you do not accept, you can log out below.
+          </p>
+        </div>
+
+        <!-- Agreement Checkbox Container -->
+        <div class="terms-agree-wrap mt-3" id="termsAgreeContainer" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; padding: 12px 14px; transition: all 0.25s ease;">
           <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin: 0;">
-            <input type="checkbox" id="termsAgreeCheckbox" style="margin-top: 3px; width: 18px; height: 18px; accent-color: var(--indigo);">
+            <input type="checkbox" id="termsAgreeCheckbox" style="margin-top: 3px; width: 18px; height: 18px; accent-color: var(--indigo); cursor: pointer;">
             <span style="font-size: 12.5px; color: var(--text-primary); line-height: 1.4;">
               I understand and agree to the <strong>Terms of Service</strong>, <strong>Privacy Policy</strong>, and grant the required permissions for advertising and File Manager database persistence.
             </span>
           </label>
         </div>
+
+        <!-- Logout Option (Shown if user refuses to check box) -->
+        <div id="termsLogoutOption" style="display: none; margin-top: 12px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 10px 14px; align-items: center; justify-content: space-between; gap: 10px;">
+          <span style="font-size: 12px; color: #fca5a5; line-height: 1.4;">
+            Do not want to agree? You can exit and sign out of your account:
+          </span>
+          <button type="button" class="btn btn-sm btn-danger" id="btnTermsLogout" style="background: #ef4444; color: #fff; font-weight: 700; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; white-space: nowrap;">
+            🚪 Logout
+          </button>
+        </div>
       </div>
 
-      <div class="modal-footer" style="padding: 14px 20px;">
-        <button type="button" class="btn btn-primary w-100" id="btnAcceptTerms" disabled style="padding: 12px; font-weight: 700; font-size: 14px;">
-          Accept & Get Started
+      <div class="modal-footer" style="padding: 14px 20px; display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" class="btn btn-primary w-100" id="btnAcceptTerms" style="padding: 12px; font-weight: 700; font-size: 14px; cursor: pointer;">
+          Accept & Continue
         </button>
       </div>
     </div>
